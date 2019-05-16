@@ -5,7 +5,7 @@ defmodule EctoCrux.MixProject do
     [
       app: :ecto_crux,
       name: "EctoCrux",
-      version: "1.1.0",
+      version: "1.1.1",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       description: "Crud concern to use in helper's schema implementation with Repo methods.",
