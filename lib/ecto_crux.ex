@@ -9,7 +9,7 @@ defmodule EctoCrux do
   ```elixir
   def deps do
     [
-      {:ecto_crux, "~> 1.1.0"}
+      {:ecto_crux, "~> 1.1.1"}
     ]
   end
   ```
@@ -55,7 +55,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Fetches all entries from the data store.
 
-      ##Example
           # Fetch all Baguettes
           Baguettes.all()
       """
@@ -67,7 +66,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Fetches all entries from the data store matching the given query.
 
-      ##Example
           # Fetch all Baguettes
           query |> Baguettes.all()
       """
@@ -79,12 +77,11 @@ defmodule EctoCrux do
       @doc """
       [Repo] Fetches a single struct from the data store where the primary key matches the given id.
 
-      ## Example
-      # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC`
-      Baguettes.get("01DACBCR6REMDH6446VCQEZ5EC")
+          # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC`
+          Baguettes.get("01DACBCR6REMDH6446VCQEZ5EC")
 
-      # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC` and preload it's bakery and flavor
-      Baguettes.get("01DACBCR6REMDH6446VCQEZ5EC", preloads: [:bakery, :flavor])
+          # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC` and preload it's bakery and flavor
+          Baguettes.get("01DACBCR6REMDH6446VCQEZ5EC", preloads: [:bakery, :flavor])
 
       note: preloads option is an crux additional feature
       """
@@ -101,7 +98,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Similar to get/2 but raises Ecto.NoResultsError if no record was found.
 
-      ##Example
           # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC`
           Baguettes.get!("01DACBCR6REMDH6446VCQEZ5EC")
       """
@@ -113,7 +109,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Create (insert) a new baguette from attrs
 
-      ##Example
           # Create a new baguette with `:kind` value set to `:tradition`
           {:ok, baguette} = Baguettes.create(%{kind: :tradition})
       """
@@ -129,7 +124,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
-      ##Example
           # Create a new baguette with `:kind` value set to `:tradition`
           baguette = Baguettes.create(%{kind: :tradition})
           # Create another one with the same kind
@@ -157,7 +151,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Updates a changeset using its primary key.
 
-      ##Example
           {:ok, updated_baguette} = Baguettes.update(baguette, %{kind: :best})
       """
       @spec update(blob :: Ecto.Schema.t(), attrs :: map(), opts :: Keyword.t()) ::
@@ -171,7 +164,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Deletes a struct using its primary key.
 
-      ##Example
           {:ok, deleted_baguette} = Baguettes.delete(baguette)
       """
       @spec delete(blob :: Ecto.Schema.t()) ::
@@ -188,7 +180,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Fetches a single result from the clauses.
 
-      ##Example
           best_baguette = Baguettes.get_by(kind: :best)
       """
       @spec get_by(clauses :: Keyword.t() | map(), opts :: Keyword.t()) :: Ecto.Schema.t() | nil
@@ -199,7 +190,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Fetches all results from the clauses.
 
-      ##Example
           best_baguettes = Baguettes.find_by(kind: :best)
       """
       @spec find_by(filters :: Keyword.t() | map()) :: [Ecto.Schema.t()]
@@ -212,7 +202,6 @@ defmodule EctoCrux do
       @doc """
       Like `find_by/1` by returns a stream to handle large requests
 
-      ##Example
           Repo.transaction(fn ->
             Baguettes.stream(kind: :best)
             |> Stream.chunk_every(@chunk_size)
@@ -231,7 +220,6 @@ defmodule EctoCrux do
       @doc """
       [Repo] Preloads all associations on the given struct or structs.
 
-      ##Example
           my_baguette = Baguettes.preload(baguette, [:floor, :boulanger])
       """
       @spec preload(structs_or_struct_or_nil, preloads :: term(), opts :: Keyword.t()) ::
@@ -244,7 +232,6 @@ defmodule EctoCrux do
       @doc """
       Count number of elements
 
-      ##Example
           baguettes_count = Baguettes.count()
       """
       @spec count() :: integer()
