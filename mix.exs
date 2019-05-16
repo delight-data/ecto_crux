@@ -7,6 +7,7 @@ defmodule EctoCrux.MixProject do
       name: "EctoCrux",
       version: "1.1.0",
       elixir: "~> 1.8",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       description: "Crud concern to use in helper's schema implementation with Repo methods.",
       deps: deps(),
@@ -35,4 +36,8 @@ defmodule EctoCrux.MixProject do
       {:ecto_sql, "~> 3.1.0", only: :dev}
     ]
   end
+
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:dev), do: ["lib_sample", "lib"]
+  defp elixirc_paths(:prod), do: ["lib"]
 end
