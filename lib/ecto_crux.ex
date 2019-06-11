@@ -145,12 +145,7 @@ defmodule EctoCrux do
               {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
       def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
         # convert to Keylist
-        IO.puts(presence_attrs)
-
-        presence_attrs =
-          Enum.reduce(presence_attrs, [], fn {key, value}, acc ->
-            [{String.to_atom(key), value} | acc]
-          end)
+        presence_attrs = Enum.reduce(presence_attrs, [], fn {k, v}, acc -> [{k, v} | acc] end)
 
         blob =
           @schema_module
