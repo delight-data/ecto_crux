@@ -146,12 +146,15 @@ defmodule EctoCrux do
       def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
         # convert to Keylist
         presence_attrs = Enum.reduce(presence_attrs, [], fn {k, v}, acc -> [{k, v} | acc] end)
+        IO.inspect(presence_attrs)
 
         blob =
           @schema_module
           |> where(^presence_attrs)
           |> limit(1)
           |> @repo.all()
+
+        IO.inspect(blob)
 
         if blob, do: {:ok, blob}, else: create(creation_attrs)
       end
