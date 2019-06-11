@@ -153,7 +153,7 @@ defmodule EctoCrux do
           |> where(^presence_attrs)
           |> limit(1)
           |> @repo.all()
-          |> tl()
+          |> Enum.at(-1)
 
         IO.inspect(blob)
 
