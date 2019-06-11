@@ -46,7 +46,7 @@ defmodule EctoCrux do
 
       alias Ecto.ULID
 
-      import Ecto.Query, only: [from: 2, where: 2]
+      import Ecto.Query, only: [from: 2, where: 2, limit: 2]
 
       def unquote(:schema_module)() do
         @schema_module
@@ -144,7 +144,16 @@ defmodule EctoCrux do
       @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
               {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
       def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
-        blob = get_by(presence_attrs)
+        # convert to Keylist
+        presence_attrs = Enum.reduce(presence_attrs, [], fn {k, v}, acc -> [{k, v} | acc] end)
+
+        blob =
+          @schema_module
+          |> where(^presence_attrs)
+          |> limit(1)
+          |> @repo.all()
+          |> Enum.at(-1)
+
         if blob, do: {:ok, blob}, else: create(creation_attrs)
       end
 
