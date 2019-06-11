@@ -144,6 +144,12 @@ defmodule EctoCrux do
       @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
               {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
       def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
+        # convert to Keylist
+        presence_attrs =
+          Enum.reduce(presence_attrs, [], fn {key, value}, acc ->
+            [{String.to_atom(key), value} | acc]
+          end)
+
         blob =
           @schema_module
           |> where(^presence_attrs)
