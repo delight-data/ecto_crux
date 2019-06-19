@@ -144,17 +144,23 @@ defmodule EctoCrux do
       @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
               {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
       def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
+        blob = exist?(presence_attrs)
+        if blob, do: {:ok, blob}, else: create(creation_attrs)
+      end
+
+      @doc """
+      Test if an object with <presence_attrs> exist
+      """
+      @spec create_if_not_exist(presence_attrs :: map()) :: {:ok, Ecto.Schema.t()}
+      def unquote(:exist?)(presence_attrs) do
         # convert to Keylist
         presence_attrs = Enum.reduce(presence_attrs, [], fn {k, v}, acc -> [{k, v} | acc] end)
 
-        blob =
-          @schema_module
-          |> where(^presence_attrs)
-          |> limit(1)
-          |> @repo.all()
-          |> Enum.at(-1)
-
-        if blob, do: {:ok, blob}, else: create(creation_attrs)
+        @schema_module
+        |> where(^presence_attrs)
+        |> limit(1)
+        |> @repo.all()
+        |> Enum.at(-1)
       end
 
       @doc """
