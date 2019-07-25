@@ -208,7 +208,14 @@ defmodule EctoCrux do
           best_baguettes = Baguettes.find_by(kind: :best)
       """
       @spec find_by(filters :: Keyword.t() | map()) :: [Ecto.Schema.t()]
-      def unquote(:find_by)(filters) do
+      def unquote(:find_by)(filters) when is_map(filters) do
+        filters =
+          filters
+          |> Enum.map(fn {k, v} -> {k, v} end)
+          |> find_by()
+      end
+
+      def unquote(:find_by)(filters) when is_list(filters) do
         @schema_module
         |> where(^filters)
         |> @repo.all()
