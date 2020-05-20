@@ -100,10 +100,10 @@ defmodule EctoCrux do
       This is very useful if you use soft_delete features
       """
       @spec get_undeleted(id :: term, opts :: Keyword.t()) :: Ecto.Schema.t() | nil
-      def unquote(:get)(id, opts \\ []) do
-        @schema_module
-        |> where([e], e.id == ^id)
-        |> where([e], not is_nil(e.deleted_at))
+      def unquote(:get_undeleted)(id, opts \\ []) do
+        query = from(e in @schema_module, where: e.id == ^id, where: not is_nil(e.deleted_at))
+
+        query
         |> @repo.one()
         |> build_preload(opts[:preloads])
       end
@@ -228,11 +228,10 @@ defmodule EctoCrux do
         |> get_undeleted_by()
       end
 
-      @spec get_undeleted_by(filters) :: Ecto.Schema.t() | nil
       def unquote(:get_undeleted_by)(filters) when is_list(filters) do
-        @schema_module
-        |> where(^filters)
-        |> where([e], not is_nil(e.deleted_at))
+        query = from(e in @schema_module, where: ^filters, where: not is_nil(e.deleted_at))
+
+        query
         |> @repo.one()
       end
 
@@ -268,10 +267,10 @@ defmodule EctoCrux do
       end
 
       def unquote(:find_undeleted_by)(filters) when is_list(filters) do
-        @schema_module
-        |> where(^filters)
-        |> where([e], not is_nil(e.deleted_at))
-        |> find_by()
+        query = from(e in @schema_module, where: ^filters, where: not is_nil(e.deleted_at))
+
+        query
+        |> @repo.all()
       end
 
       @doc """
@@ -282,7 +281,7 @@ defmodule EctoCrux do
       @spec first() :: Ecto.Schema.t()
       def unquote(:first)() do
         @schema_module
-        |> order_by(asc: :id)
+        |> first()
         |> @repo.one()
       end
 
@@ -293,9 +292,9 @@ defmodule EctoCrux do
       """
       @spec first(count :: term) :: [Ecto.Schema.t()]
       def unquote(:first)(count) do
-        @schema_module
-        |> limit(count)
-        |> order_by(asc: :id)
+        query = from(e in @schema_module, order_by: [desc: e.id], limit: ^count)
+
+        query
         |> @repo.all()
       end
 
@@ -307,7 +306,7 @@ defmodule EctoCrux do
       @spec last() :: Ecto.Schema.t()
       def unquote(:last)() do
         @schema_module
-        |> order_by(desc: :id)
+        |> last()
         |> @repo.one()
       end
 
@@ -318,9 +317,9 @@ defmodule EctoCrux do
       """
       @spec last(count :: term) :: [Ecto.Schema.t()]
       def unquote(:last)(count) do
-        @schema_module
-        |> limit(count)
-        |> order_by(desc: :id)
+        query = from(e in @schema_module, order_by: [asc: e.id], limit: ^count)
+
+        query
         |> @repo.all()
       end
 
