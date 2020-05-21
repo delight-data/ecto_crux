@@ -101,7 +101,7 @@ defmodule EctoCrux do
       """
       @spec get_undeleted(id :: term, opts :: Keyword.t()) :: Ecto.Schema.t() | nil
       def unquote(:get_undeleted)(id, opts \\ []) do
-        query = from(e in @schema_module, where: e.id == ^id, where: not is_nil(e.deleted_at))
+        query = from(e in @schema_module, where: e.id == ^id, where: is_nil(e.deleted_at))
 
         query
         |> @repo.one()
@@ -229,7 +229,7 @@ defmodule EctoCrux do
       end
 
       def unquote(:get_undeleted_by)(filters) when is_list(filters) do
-        query = from(e in @schema_module, where: ^filters, where: not is_nil(e.deleted_at))
+        query = from(e in @schema_module, where: ^filters, where: is_nil(e.deleted_at))
 
         query
         |> @repo.one()
@@ -267,7 +267,7 @@ defmodule EctoCrux do
       end
 
       def unquote(:find_undeleted_by)(filters) when is_list(filters) do
-        query = from(e in @schema_module, where: ^filters, where: not is_nil(e.deleted_at))
+        query = from(e in @schema_module, where: ^filters, where: is_nil(e.deleted_at))
 
         query
         |> @repo.all()
