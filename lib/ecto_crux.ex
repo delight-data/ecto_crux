@@ -194,11 +194,13 @@ defmodule EctoCrux do
 
           {:ok, deleted_baguette} = Baguettes.delete(baguette)
       """
-      @spec delete(blob :: Ecto.Schema.t()) ::
+      @spec delete(blob :: Ecto.Schema.t(), opts :: Keyword.t()) ::
               {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:delete)(blob) do
-        @repo.delete(blob)
+      def unquote(:delete)(blob, opts \\ []) do
+        @repo.delete(blob, opts)
       end
+
+      # delete all
 
       @doc false
       def unquote(:change)(blob, attrs \\ %{}) do
