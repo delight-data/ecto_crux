@@ -373,6 +373,11 @@ defmodule EctoCrux do
       def unquote(:count)() do
         @repo.one(from(b in @schema_module, select: fragment("count(*)")))
       end
+
+      @spec count(opts :: Keyword.t()) :: integer()
+      def unquote(:count)(opts) do
+        @repo.one(from(b in @schema_module, select: fragment("count(*)")), opts)
+      end
     end
   end
 end
