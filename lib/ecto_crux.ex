@@ -9,7 +9,7 @@ defmodule EctoCrux do
   ```elixir
   def deps do
     [
-      {:ecto_crux, "~> 1.1.1"}
+      {:ecto_crux, "~> 1.1.5"}
     ]
   end
   ```
@@ -94,6 +94,19 @@ defmodule EctoCrux do
       defp build_preload(blob, nil), do: blob
       defp build_preload(blob, []), do: blob
       defp build_preload(blob, preloads), do: preload(blob, preloads)
+
+      @doc """
+      Similar to get/1 but ignore record if column :deleted_at is not nil
+      This is very useful if you use soft_delete features
+      """
+      @spec get_undeleted(id :: term, opts :: Keyword.t()) :: Ecto.Schema.t() | nil
+      def unquote(:get_undeleted)(id, opts \\ []) do
+        query = from(e in @schema_module, where: e.id == ^id, where: is_nil(e.deleted_at))
+
+        query
+        |> @repo.one()
+        |> build_preload(opts[:preloads])
+      end
 
       @doc """
       [Repo] Similar to get/2 but raises Ecto.NoResultsError if no record was found.
@@ -181,11 +194,13 @@ defmodule EctoCrux do
 
           {:ok, deleted_baguette} = Baguettes.delete(baguette)
       """
-      @spec delete(blob :: Ecto.Schema.t()) ::
+      @spec delete(blob :: Ecto.Schema.t(), opts :: Keyword.t()) ::
               {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:delete)(blob) do
-        @repo.delete(blob)
+      def unquote(:delete)(blob, opts \\ []) do
+        @repo.delete(blob, opts)
       end
+
+      # delete all
 
       @doc false
       def unquote(:change)(blob, attrs \\ %{}) do
@@ -203,21 +218,110 @@ defmodule EctoCrux do
       end
 
       @doc """
+      Similar to get_by/1 but ignore record if column :deleted_at is not nil
+      This is very useful if you use soft_delete features
+
+          best_baguette = Baguettes.get_undeleted_by(kind: :best)
+      """
+      @spec get_undeleted_by(clauses :: Keyword.t() | map()) :: Ecto.Schema.t() | nil
+      def unquote(:get_undeleted_by)(clauses) when is_map(clauses) do
+        clauses
+        |> Enum.map(fn {k, v} -> {k, v} end)
+        |> get_undeleted_by()
+      end
+
+      def unquote(:get_undeleted_by)(filters) when is_list(filters) do
+        query = from(e in @schema_module, where: ^filters, where: is_nil(e.deleted_at))
+
+        query
+        |> @repo.one()
+      end
+
+      @doc """
       [Repo] Fetches all results from the clauses.
 
           best_baguettes = Baguettes.find_by(kind: :best)
       """
       @spec find_by(filters :: Keyword.t() | map()) :: [Ecto.Schema.t()]
       def unquote(:find_by)(filters) when is_map(filters) do
-        filters =
-          filters
-          |> Enum.map(fn {k, v} -> {k, v} end)
-          |> find_by()
+        filters
+        |> Enum.map(fn {k, v} -> {k, v} end)
+        |> find_by()
       end
 
       def unquote(:find_by)(filters) when is_list(filters) do
         @schema_module
         |> where(^filters)
+        |> @repo.all()
+      end
+
+      @doc """
+      Similar to find_by/1 but ignore record if column :deleted_at is not nil
+      This is very useful if you use soft_delete features
+
+          best_baguettes = Baguettes.find_by(kind: :best)
+      """
+      @spec find_undeleted_by(filters :: Keyword.t() | map()) :: [Ecto.Schema.t()]
+      def unquote(:find_undeleted_by)(filters) when is_map(filters) do
+        filters
+        |> Enum.map(fn {k, v} -> {k, v} end)
+        |> find_undeleted_by()
+      end
+
+      def unquote(:find_undeleted_by)(filters) when is_list(filters) do
+        query = from(e in @schema_module, where: ^filters, where: is_nil(e.deleted_at))
+
+        query
+        |> @repo.all()
+      end
+
+      @doc """
+      Little helper to pick first record
+
+          first_baguette = Baguettes.first()
+      """
+      @spec first() :: Ecto.Schema.t()
+      def unquote(:first)() do
+        @schema_module
+        |> first()
+        |> @repo.one()
+      end
+
+      @doc """
+      Little helper to pick first records
+
+          first_baguettes = Baguettes.first(42)
+      """
+      @spec first(count :: term) :: [Ecto.Schema.t()]
+      def unquote(:first)(count) do
+        query = from(e in @schema_module, order_by: [desc: e.id], limit: ^count)
+
+        query
+        |> @repo.all()
+      end
+
+      @doc """
+      Little helper to pick last record. the last baguette is always the best !
+
+          last_baguette = Baguettes.last()
+      """
+      @spec last() :: Ecto.Schema.t()
+      def unquote(:last)() do
+        @schema_module
+        |> last()
+        |> @repo.one()
+      end
+
+      @doc """
+      Little helper to pick last records.
+
+          last_baguettes = Baguettes.last(42)
+      """
+      @spec last(count :: term) :: [Ecto.Schema.t()]
+      def unquote(:last)(count) do
+        query = from(e in @schema_module, order_by: [asc: e.id], limit: ^count)
+
+        query
         |> @repo.all()
       end
 
