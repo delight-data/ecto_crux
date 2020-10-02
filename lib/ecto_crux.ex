@@ -64,10 +64,10 @@ defmodule EctoCrux do
       end
 
       @doc """
-      [Repo] Fetches all entries from the data store matching the given query.
+      [Repo] Fetches all entries from the data store matching using opts
 
-          # Fetch all Baguettes
-          query |> Baguettes.all()
+          # Fetch all french Baguettes
+          Baguettes.all(prefix: "francaise")
       """
       @spec all(opts :: Keyword.t()) :: [Ecto.Schema.t()]
       def unquote(:all)(opts) do
@@ -249,10 +249,19 @@ defmodule EctoCrux do
         |> find_by()
       end
 
-      def unquote(:find_by)(filters) when is_list(filters) do
+      def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
+
+      def unquote(:find_by)(filters, opts) when is_list(filters) do
         @schema_module
         |> where(^filters)
-        |> @repo.all()
+        |> @repo.all(opts)
+      end
+
+      @spec find_by(filters :: Keyword.t() | map(), opts :: Keyword.t()) :: [Ecto.Schema.t()]
+      def unquote(:find_by)(filters, opts) when is_map(filters) do
+        filters
+        |> Enum.map(fn {k, v} -> {k, v} end)
+        |> find_by(opts)
       end
 
       @doc """
