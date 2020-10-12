@@ -12,7 +12,7 @@ Hex documentation: [here](https://hexdocs.pm/ecto_crux/EctoCrux.html#content)
 ```elixir
 def deps do
   [
-    {:ecto_crux, "~> 1.1.1"}
+    {:ecto_crux, "~> 1.1.5"}
   ]
 end
 ```
