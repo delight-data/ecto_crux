@@ -164,7 +164,7 @@ defmodule EctoCrux do
       @doc """
       Test if an object with <presence_attrs> exist
       """
-      @spec create_if_not_exist(presence_attrs :: map()) :: {:ok, Ecto.Schema.t()}
+      @spec exist?(presence_attrs :: map()) :: Ecto.Schema.t() | nil
       def unquote(:exist?)(presence_attrs) do
         # convert to Keylist
         presence_attrs = Enum.reduce(presence_attrs, [], fn {k, v}, acc -> [{k, v} | acc] end)
