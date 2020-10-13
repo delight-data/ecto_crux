@@ -119,7 +119,7 @@ defmodule EctoCrux do
         @repo.get!(@schema_module, id, opts)
       end
 
-      if Module.defines?(@repo, {:insert, 1}) do
+      if function_exported?(@repo, :insert, 1) do
         @doc """
         [Repo] Create (insert) a new baguette from attrs
 
@@ -178,7 +178,7 @@ defmodule EctoCrux do
         |> Enum.at(-1)
       end
 
-      if Module.defines?(@repo, {:update, 1}) do
+      if function_exported?(@repo, :update, 1) do
         @doc """
         [Repo] Updates a changeset using its primary key.
 
@@ -193,7 +193,7 @@ defmodule EctoCrux do
         end
       end
 
-      if Module.defines?(@repo, {:delete, 2}) do
+      if function_exported?(@repo, :delete, 2) do
         @doc """
         [Repo] Deletes a struct using its primary key.
 
