@@ -119,52 +119,54 @@ defmodule EctoCrux do
         @repo.get!(@schema_module, id, opts)
       end
 
-      @doc """
-      [Repo] Create (insert) a new baguette from attrs
+      if Module.defines?(@repo, {:insert, 1}) do
+        @doc """
+        [Repo] Create (insert) a new baguette from attrs
 
-          # Create a new baguette with `:kind` value set to `:tradition`
-          {:ok, baguette} = Baguettes.create(%{kind: :tradition})
-      """
-      @spec create(attrs :: map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create)(attrs \\ %{}) do
-        schema = struct(@schema_module)
+            # Create a new baguette with `:kind` value set to `:tradition`
+            {:ok, baguette} = Baguettes.create(%{kind: :tradition})
+        """
+        @spec create(attrs :: map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create)(attrs \\ %{}) do
+          schema = struct(@schema_module)
 
-        schema
-        |> @schema_module.changeset(attrs)
-        |> @repo.insert()
-      end
+          schema
+          |> @schema_module.changeset(attrs)
+          |> @repo.insert()
+        end
 
-      @doc """
-      [Repo] Create (insert) a baguette from attrs if it doesn't exist
+        @doc """
+        [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
-          # Create a new baguette with `:kind` value set to `:tradition`
-          baguette = Baguettes.create(%{kind: :tradition})
-          # Create another one with the same kind
-          {:ok, another_ baguette} = Baguettes.create_if_not_exist(%{kind: :tradition})
-          # `baguette` and `another_baguette` are the same `Baguette`
-      """
-      @spec create_if_not_exist(attrs :: map()) ::
-              {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create_if_not_exist)(attrs) do
-        create_if_not_exist(attrs, attrs)
-      end
+            # Create a new baguette with `:kind` value set to `:tradition`
+            baguette = Baguettes.create(%{kind: :tradition})
+            # Create another one with the same kind
+            {:ok, another_ baguette} = Baguettes.create_if_not_exist(%{kind: :tradition})
+            # `baguette` and `another_baguette` are the same `Baguette`
+        """
+        @spec create_if_not_exist(attrs :: map()) ::
+                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(attrs) do
+          create_if_not_exist(attrs, attrs)
+        end
 
-      @doc """
-      [Repo] Create (insert) a baguette from attrs if it doesn't exist
+        @doc """
+        [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
-      Like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
-      """
-      @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
-              {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
-        blob = exist?(presence_attrs)
-        if blob, do: {:ok, blob}, else: create(creation_attrs)
+        Like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
+        """
+        @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
+                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
+          blob = exist?(presence_attrs)
+          if blob, do: {:ok, blob}, else: create(creation_attrs)
+        end
       end
 
       @doc """
       Test if an object with <presence_attrs> exist
       """
-      @spec create_if_not_exist(presence_attrs :: map()) :: {:ok, Ecto.Schema.t()}
+      @spec exist?(presence_attrs :: map()) :: Ecto.Schema.t() | nil
       def unquote(:exist?)(presence_attrs) do
         # convert to Keylist
         presence_attrs = Enum.reduce(presence_attrs, [], fn {k, v}, acc -> [{k, v} | acc] end)
@@ -176,28 +178,32 @@ defmodule EctoCrux do
         |> Enum.at(-1)
       end
 
-      @doc """
-      [Repo] Updates a changeset using its primary key.
+      if Module.defines?(@repo, {:update, 1}) do
+        @doc """
+        [Repo] Updates a changeset using its primary key.
 
-          {:ok, updated_baguette} = Baguettes.update(baguette, %{kind: :best})
-      """
-      @spec update(blob :: Ecto.Schema.t(), attrs :: map(), opts :: Keyword.t()) ::
-              {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:update)(blob, attrs, opts \\ []) do
-        blob
-        |> @schema_module.changeset(attrs)
-        |> @repo.update()
+            {:ok, updated_baguette} = Baguettes.update(baguette, %{kind: :best})
+        """
+        @spec update(blob :: Ecto.Schema.t(), attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:update)(blob, attrs, opts \\ []) do
+          blob
+          |> @schema_module.changeset(attrs)
+          |> @repo.update()
+        end
       end
 
-      @doc """
-      [Repo] Deletes a struct using its primary key.
+      if Module.defines?(@repo, {:delete, 2}) do
+        @doc """
+        [Repo] Deletes a struct using its primary key.
 
-          {:ok, deleted_baguette} = Baguettes.delete(baguette)
-      """
-      @spec delete(blob :: Ecto.Schema.t(), opts :: Keyword.t()) ::
-              {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:delete)(blob, opts \\ []) do
-        @repo.delete(blob, opts)
+            {:ok, deleted_baguette} = Baguettes.delete(baguette)
+        """
+        @spec delete(blob :: Ecto.Schema.t(), opts :: Keyword.t()) ::
+                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:delete)(blob, opts \\ []) do
+          @repo.delete(blob, opts)
+        end
       end
 
       # delete all
