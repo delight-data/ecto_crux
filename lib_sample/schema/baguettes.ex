@@ -10,4 +10,6 @@ defmodule EctoCrux.Schema.Baguettes do
   """
 
   use EctoCrux, module: EctoCrux.Schema.Baguette
+
+  require EctoCrux.Repo
 end
