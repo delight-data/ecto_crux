@@ -233,15 +233,15 @@ defmodule EctoCrux do
       @doc """
       Test if an object with <presence_attrs> exist
       """
-      @spec exist?(presence_attrs :: map()) :: Ecto.Schema.t() | nil
-      def unquote(:exist?)(presence_attrs) do
+      @spec exist?(presence_attrs :: map(), opts :: Keyword.t()) :: @schema_module.t() | nil
+      def unquote(:exist?)(presence_attrs, opts \\ []) do
         # convert to Keylist
         presence_attrs = Enum.reduce(presence_attrs, [], fn {k, v}, acc -> [{k, v} | acc] end)
 
         @schema_module
         |> where(^presence_attrs)
         |> limit(1)
-        |> @repo.all()
+        |> @repo.all(opts)
         |> Enum.at(-1)
       end
 
