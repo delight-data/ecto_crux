@@ -167,7 +167,7 @@ defmodule EctoCrux do
       Similar to get/1 but ignore record if column :deleted_at is not nil
       This is very useful if you use soft_delete features
       """
-      @spec get_undeleted(id :: term, opts :: Keyword.t()) :: Ecto.Schema.t() | nil
+      @spec get_undeleted(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
       def unquote(:get_undeleted)(id, opts \\ []) do
         query = from(e in @schema_module, where: e.id == ^id, where: is_nil(e.deleted_at))
 
@@ -182,7 +182,7 @@ defmodule EctoCrux do
           # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC`
           Baguettes.get!("01DACBCR6REMDH6446VCQEZ5EC")
       """
-      @spec get!(id :: term, opts :: Keyword.t()) :: Ecto.Schema.t() | nil
+      @spec get!(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
       def unquote(:get!)(id, opts \\ []) do
         @repo.get!(@schema_module, id, opts)
       end
@@ -211,7 +211,7 @@ defmodule EctoCrux do
             # `baguette` and `another_baguette` are the same `Baguette`
         """
         @spec create_if_not_exist(attrs :: map()) ::
-                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
         def unquote(:create_if_not_exist)(attrs) do
           create_if_not_exist(attrs, attrs)
         end
@@ -222,8 +222,9 @@ defmodule EctoCrux do
         Like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
         """
         @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
-                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs) do
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs)
+            when is_map(creation_attrs) do
           blob = exist?(presence_attrs)
           if blob, do: {:ok, blob}, else: create(creation_attrs)
         end
@@ -250,8 +251,8 @@ defmodule EctoCrux do
 
             {:ok, updated_baguette} = Baguettes.update(baguette, %{kind: :best})
         """
-        @spec update(blob :: Ecto.Schema.t(), attrs :: map(), opts :: Keyword.t()) ::
-                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+        @spec update(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
         def unquote(:update)(blob, attrs, opts \\ []) do
           blob
           |> @schema_module.changeset(attrs)
@@ -265,8 +266,8 @@ defmodule EctoCrux do
 
             {:ok, deleted_baguette} = Baguettes.delete(baguette)
         """
-        @spec delete(blob :: Ecto.Schema.t(), opts :: Keyword.t()) ::
-                {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+        @spec delete(blob :: @schema_module.t(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
         def unquote(:delete)(blob, opts \\ []) do
           @repo.delete(blob, opts)
         end
@@ -278,7 +279,6 @@ defmodule EctoCrux do
       def unquote(:change)(blob, attrs \\ %{}) do
         @schema_module.changeset(blob, attrs)
       end
-
 
       @doc """
       [Repo] Fetches a single result from the clauses.
@@ -325,14 +325,13 @@ defmodule EctoCrux do
         end
       end
 
-
       @doc """
       Similar to get_by/1 but ignore record if column :deleted_at is not nil
       This is very useful if you use soft_delete features
 
           best_baguette = Baguettes.get_undeleted_by(kind: :best)
       """
-      @spec get_undeleted_by(clauses :: Keyword.t() | map()) :: Ecto.Schema.t() | nil
+      @spec get_undeleted_by(clauses :: Keyword.t() | map()) :: @schema_module.t() | nil
       def unquote(:get_undeleted_by)(clauses) when is_map(clauses) do
         clauses
         |> Enum.map(fn {k, v} -> {k, v} end)
@@ -351,7 +350,7 @@ defmodule EctoCrux do
 
           best_baguettes = Baguettes.find_by(kind: :best)
       """
-      @spec find_by(filters :: Keyword.t() | map()) :: [Ecto.Schema.t()]
+      @spec find_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
 
       def unquote(:find_by)(filters) when is_map(filters) do
         filters
@@ -367,7 +366,7 @@ defmodule EctoCrux do
         |> @repo.all(opts)
       end
 
-      @spec find_by(filters :: Keyword.t() | map(), opts :: Keyword.t()) :: [Ecto.Schema.t()]
+      @spec find_by(filters :: Keyword.t() | map(), opts :: Keyword.t()) :: [@schema_module.t()]
       def unquote(:find_by)(filters, opts) when is_map(filters) do
         filters
         |> Enum.map(fn {k, v} -> {k, v} end)
@@ -380,7 +379,7 @@ defmodule EctoCrux do
 
           best_baguettes = Baguettes.find_by(kind: :best)
       """
-      @spec find_undeleted_by(filters :: Keyword.t() | map()) :: [Ecto.Schema.t()]
+      @spec find_undeleted_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
       def unquote(:find_undeleted_by)(filters) when is_map(filters) do
         filters
         |> Enum.map(fn {k, v} -> {k, v} end)
@@ -399,7 +398,7 @@ defmodule EctoCrux do
 
           first_baguette = Baguettes.first()
       """
-      @spec first() :: Ecto.Schema.t()
+      @spec first() :: @schema_module.t()
       def unquote(:first)() do
         @schema_module
         |> first()
@@ -411,7 +410,7 @@ defmodule EctoCrux do
 
           first_baguettes = Baguettes.first(42)
       """
-      @spec first(count :: term) :: [Ecto.Schema.t()]
+      @spec first(count :: term) :: [@schema_module.t()]
       def unquote(:first)(count) do
         query = from(e in @schema_module, order_by: [desc: e.id], limit: ^count)
 
@@ -424,7 +423,7 @@ defmodule EctoCrux do
 
           last_baguette = Baguettes.last()
       """
-      @spec last() :: Ecto.Schema.t()
+      @spec last() :: @schema_module.t()
       def unquote(:last)() do
         @schema_module
         |> last()
@@ -436,7 +435,7 @@ defmodule EctoCrux do
 
           last_baguettes = Baguettes.last(42)
       """
-      @spec last(count :: term) :: [Ecto.Schema.t()]
+      @spec last(count :: term) :: [@schema_module.t()]
       def unquote(:last)(count) do
         query = from(e in @schema_module, order_by: [asc: e.id], limit: ^count)
 
@@ -469,7 +468,7 @@ defmodule EctoCrux do
       """
       @spec preload(structs_or_struct_or_nil, preloads :: term(), opts :: Keyword.t()) ::
               structs_or_struct_or_nil
-            when structs_or_struct_or_nil: [Ecto.Schema.t()] | Ecto.Schema.t() | nil
+            when structs_or_struct_or_nil: [@schema_module.t()] | @schema_module.t() | nil
       def unquote(:preload)(blob, preloads, opts \\ []) do
         blob |> @repo.preload(preloads, opts)
       end
