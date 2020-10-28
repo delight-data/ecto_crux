@@ -220,6 +220,17 @@ defmodule EctoCrux do
         @doc """
         [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
+        Like `create_if_not_exist/1` but you can specify options (like prefix) to give to ecto
+        """
+        @spec create_if_not_exist(attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(attrs, opts) when is_list(opts) do
+          create_if_not_exist(attrs, attrs, opts)
+        end
+
+        @doc """
+        [Repo] Create (insert) a baguette from attrs if it doesn't exist
+
         Like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
         """
         @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
@@ -228,6 +239,22 @@ defmodule EctoCrux do
             when is_map(creation_attrs) do
           blob = exist?(presence_attrs)
           if blob, do: {:ok, blob}, else: create(creation_attrs)
+        end
+
+        @doc """
+        [Repo] Create (insert) a baguette from attrs if it doesn't exist
+
+        Like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
+        """
+        @spec create_if_not_exist(
+                presence_attrs :: map(),
+                creation_attrs :: map(),
+                opts :: Keyword.t()
+              ) :: {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs, opts)
+            when is_map(creation_attrs) and is_list(opts) do
+          blob = exist?(presence_attrs, opts)
+          if blob, do: {:ok, blob}, else: create(creation_attrs, opts)
         end
       end
 
