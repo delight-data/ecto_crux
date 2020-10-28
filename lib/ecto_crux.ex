@@ -44,9 +44,13 @@ defmodule EctoCrux do
       @schema_module args[:module]
       @repo args[:repo] || Application.get_all_env(:ecto_crux)[:repo]
 
-      alias Ecto.ULID
-
       import Ecto.Query, only: [from: 2, where: 2, limit: 2]
+
+      alias Ecto.{
+        Query,
+        Queryable,
+        ULID
+      }
 
       def unquote(:schema_module)() do
         @schema_module
@@ -58,7 +62,7 @@ defmodule EctoCrux do
           # Fetch all Baguettes
           Baguettes.all()
       """
-      @spec all() :: [Ecto.Schema.t()]
+      @spec all() :: [@schema_module.t()]
       def unquote(:all)() do
         @repo.all(@schema_module)
       end
@@ -69,9 +73,39 @@ defmodule EctoCrux do
           # Fetch all french Baguettes
           Baguettes.all(prefix: "francaise")
       """
-      @spec all(opts :: Keyword.t()) :: [Ecto.Schema.t()]
-      def unquote(:all)(opts) do
+      @spec all(opts :: Keyword.t()) :: [@schema_module.t()]
+      def unquote(:all)(opts) when is_list(opts) do
         @repo.all(@schema_module, opts)
+      end
+
+      @doc """
+      [Repo] Fetches all queryable entries from the data store.
+
+          # Fetch all queryable Baguettes
+          Baguettes.all(queryable)
+      """
+      @spec all(queryable :: Ecto.Queryable.t()) :: [@schema_module.t()]
+      def unquote(:all)(queryable) do
+        queryable |> @repo.all() |> ensure_typed_list
+      end
+
+      @doc """
+      [Repo] Fetches all queryable entries from the data store matching using opts
+
+          # Fetch all queryable french Baguettes
+          Baguettes.all(queryable, prefix: "francaise")
+      """
+      @spec all(queryable :: Ecto.Queryable.t(), opts :: Keyword.t()) :: [@schema_module.t()]
+      def unquote(:all)(queryable, opts) do
+        queryable |> @repo.all(opts) |> ensure_typed_list
+      end
+
+      @spec ensure_typed_list(any) :: [@schema_module.t()]
+      defp ensure_typed_list(items) do
+        case items do
+          [%@schema_module{} = _ | _] -> items
+          _ -> []
+        end
       end
 
       @doc """
@@ -79,16 +113,50 @@ defmodule EctoCrux do
 
           # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC`
           Baguettes.get("01DACBCR6REMDH6446VCQEZ5EC")
+      """
+      @spec get(id :: term) :: @schema_module.t() | nil
+      def unquote(:get)(id), do: get(id, [])
+
+      @doc """
+      [Repo] Fetches a single queryable struct from the data store where the primary key matches the given id.
+
+          # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC`
+          Baguettes.get(query, "01DACBCR6REMDH6446VCQEZ5EC")
+      """
+      @spec get(query :: Ecto.Query.t(), id :: term) ::
+              @schema_module.t() | nil
+      def unquote(:get)(%Ecto.Query{} = query, id), do: get(query, id, [])
+
+      @doc """
+      [Repo] Fetches a single struct from the data store where the primary key matches the given id.
 
           # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC` and preload it's bakery and flavor
           Baguettes.get("01DACBCR6REMDH6446VCQEZ5EC", preloads: [:bakery, :flavor])
 
       note: preloads option is an crux additional feature
       """
-      @spec get(id :: term, opts :: Keyword.t()) :: Ecto.Schema.t() | nil
-      def unquote(:get)(id, opts \\ []) do
-        @repo.get(@schema_module, id, opts)
+      @spec get(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
+      def unquote(:get)(id, opts) do
+        @schema_module
+        |> @repo.get(id, opts)
         |> build_preload(opts[:preloads])
+      end
+
+      @doc """
+      [Repo] Fetches a single queryable struct from the data store where the primary key matches the given id.
+
+          # Get the baguette with id primary key `01DACBCR6REMDH6446VCQEZ5EC` and preload it's bakery and flavor
+          Baguettes.get(query, "01DACBCR6REMDH6446VCQEZ5EC", preloads: [:bakery, :flavor])
+
+      note: preloads option is an crux additional feature
+      """
+      @spec get(query :: Ecto.Query.t(), id :: term, opts :: Keyword.t()) ::
+              @schema_module.t() | nil
+      def unquote(:get)(%Ecto.Query{} = query, id, opts) do
+        case @repo.get(query, id, opts) do
+          %@schema_module{} = item -> build_preload(item, opts[:preloads])
+          _ -> nil
+        end
       end
 
       defp build_preload(blob, nil), do: blob
@@ -119,7 +187,7 @@ defmodule EctoCrux do
         @repo.get!(@schema_module, id, opts)
       end
 
-      if Module.defines?(@repo, {:insert, 1}) do
+      if function_exported?(@repo, :insert, 1) do
         @doc """
         [Repo] Create (insert) a new baguette from attrs
 
@@ -128,9 +196,7 @@ defmodule EctoCrux do
         """
         @spec create(attrs :: map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
         def unquote(:create)(attrs \\ %{}) do
-          schema = struct(@schema_module)
-
-          schema
+          %@schema_module{}
           |> @schema_module.changeset(attrs)
           |> @repo.insert()
         end
@@ -178,7 +244,7 @@ defmodule EctoCrux do
         |> Enum.at(-1)
       end
 
-      if Module.defines?(@repo, {:update, 1}) do
+      if function_exported?(@repo, :update, 1) do
         @doc """
         [Repo] Updates a changeset using its primary key.
 
@@ -193,7 +259,7 @@ defmodule EctoCrux do
         end
       end
 
-      if Module.defines?(@repo, {:delete, 2}) do
+      if function_exported?(@repo, :delete, 2) do
         @doc """
         [Repo] Deletes a struct using its primary key.
 
@@ -213,15 +279,52 @@ defmodule EctoCrux do
         @schema_module.changeset(blob, attrs)
       end
 
+
       @doc """
       [Repo] Fetches a single result from the clauses.
 
           best_baguette = Baguettes.get_by(kind: :best)
       """
-      @spec get_by(clauses :: Keyword.t() | map(), opts :: Keyword.t()) :: Ecto.Schema.t() | nil
-      def unquote(:get_by)(clauses, opts \\ []) do
-        @repo.get_by(@schema_module, clauses, opts)
+      @spec get_by(clauses :: Keyword.t() | map()) :: @schema_module.t() | nil
+      def unquote(:get_by)(clauses), do: get_by(clauses, [])
+
+      @doc """
+      [Repo] Fetches a single queryable result from the clauses.
+
+          best_baguette = Baguettes.get_by(query, kind: :best)
+      """
+      @spec get_by(
+              query :: Ecto.Query.t(),
+              clauses :: Keyword.t() | map()
+            ) :: @schema_module.t() | nil
+      def unquote(:get_by)(%Ecto.Query{} = query, clauses), do: get_by(query, clauses, [])
+
+      @doc """
+      [Repo] Fetches a single result from the clauses.
+
+          best_baguette = Baguettes.get_by(kind: :best)
+      """
+      @spec get_by(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
+              @schema_module.t() | nil
+      def unquote(:get_by)(clauses, opts), do: @repo.get_by(@schema_module, clauses, opts)
+
+      @doc """
+      [Repo] Fetches a single queryable result from the clauses.
+
+          best_baguette = Baguettes.get_by(query, kind: :best)
+      """
+      @spec get_by(
+              query :: Ecto.Query.t(),
+              clauses :: Keyword.t() | map(),
+              opts :: Keyword.t()
+            ) :: @schema_module.t() | nil
+      def unquote(:get_by)(%Ecto.Query{} = query, clauses, opts) do
+        case @repo.get_by(query, clauses, opts) do
+          %@schema_module{} = item -> item
+          _ -> nil
+        end
       end
+
 
       @doc """
       Similar to get_by/1 but ignore record if column :deleted_at is not nil
