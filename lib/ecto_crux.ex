@@ -194,11 +194,12 @@ defmodule EctoCrux do
             # Create a new baguette with `:kind` value set to `:tradition`
             {:ok, baguette} = Baguettes.create(%{kind: :tradition})
         """
-        @spec create(attrs :: map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:create)(attrs \\ %{}) do
+        @spec create(attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create)(attrs \\ %{}, opts \\ []) do
           %@schema_module{}
           |> @schema_module.changeset(attrs)
-          |> @repo.insert()
+          |> @repo.insert(opts)
         end
 
         @doc """
