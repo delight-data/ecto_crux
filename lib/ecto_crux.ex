@@ -9,7 +9,7 @@ defmodule EctoCrux do
   ```elixir
   def deps do
     [
-      {:ecto_crux, "~> 1.1.5"}
+      {:ecto_crux, "~> 1.2.0"}
     ]
   end
   ```
