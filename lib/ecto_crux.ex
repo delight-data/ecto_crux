@@ -324,7 +324,7 @@ defmodule EctoCrux do
       def unquote(:find_by)(%Ecto.Query{} = query, opts) do
         map_opts = to_map(opts)
 
-        {pagination, query} =
+        {pagination, query, meta} =
           query
           |> crux_filter_away_delete_if_requested(map_opts)
           |> crux_only_delete_if_requested(map_opts)
@@ -340,15 +340,12 @@ defmodule EctoCrux do
             entries
 
           :has_pagination ->
-            total_entries = count(query, opts)
-            page_size = crux_page_size(map_opts)
-
             %EctoCrux.Page{
               entries: entries,
-              page: Keyword.get(opts, :page, 1),
-              page_size: page_size,
-              total_entries: total_entries,
-              total_pages: crux_total_pages(total_entries, page_size)
+              page: meta.page,
+              page_size: meta.page_size,
+              total_entries: meta.total_entries,
+              total_pages: meta.total_pages
             }
         end
       end
@@ -537,6 +534,14 @@ defmodule EctoCrux do
       defp to_map(list) when is_list(list), do: list |> Enum.into(%{})
       defp to_map(map) when is_map(map), do: map
 
+      def page_to_offset(page, page_size) when is_integer(page) and is_integer(page_size),
+        do: page_size * (page - 1)
+
+      def offset_to_page(0, page_size) when is_integer(page_size), do: 1
+
+      def offset_to_page(offset, page_size) when is_integer(offset) and is_integer(page_size),
+        do: (offset / page_size) |> Float.ceil() |> round()
+
       # remove all keys used by crux before being given to Repo
       defp crux_clean_opts(opts) when is_list(opts),
         do: Keyword.drop(opts, [:exclude_deleted, :only_deleted, :offset, :page, :page_size])
@@ -559,32 +564,57 @@ defmodule EctoCrux do
       defp crux_paginate(%Ecto.Query{} = query, %{page: page} = opts)
            when is_integer(page) and page > 0 do
         page_size = crux_page_size(opts)
-        do_crux_paginate(query, page_size * (page - 1), opts)
+        total_entries = count(query, to_keyword(opts))
+        total_pages = crux_total_pages(total_entries, page_size)
+
+        meta = %{
+          page_size: page_size,
+          total_entries: total_entries,
+          total_pages: total_pages,
+          page: if(page > total_pages, do: total_pages, else: page)
+        }
+
+        do_crux_paginate(query, page_to_offset(meta.page, page_size), meta)
       end
 
       defp crux_paginate(%Ecto.Query{} = query, %{offset: offset} = opts)
-           when is_integer(offset) and offset >= 0,
-           do: do_crux_paginate(query, offset, opts)
-
-      defp crux_paginate(%Ecto.Query{} = query, %{} = _opts), do: {:no_pagination, query}
-
-      defp do_crux_paginate(%Ecto.Query{} = query, offset, opts) do
+           when is_integer(offset) and offset >= 0 do
         page_size = crux_page_size(opts)
+        total_entries = count(query, to_keyword(opts))
+        offset = if offset > total_entries, do: total_entries, else: offset
 
+        meta = %{
+          page_size: page_size,
+          total_entries: total_entries,
+          total_pages: crux_total_pages(total_entries, page_size),
+          page: offset_to_page(offset, page_size)
+        }
+
+        do_crux_paginate(query, offset, meta)
+      end
+
+      defp crux_paginate(%Ecto.Query{} = query, %{} = _opts), do: {:no_pagination, query, nil}
+
+      defp do_crux_paginate(
+             %Ecto.Query{} = query,
+             offset,
+             meta
+           ) do
         query =
           query
           |> offset(^offset)
-          |> limit(^page_size)
+          |> limit(^meta.page_size)
 
-        {:has_pagination, query}
+        {:has_pagination, query, meta}
       end
 
       defp crux_page_size(opts) when is_map(opts), do: Map.get(opts, :page_size, @page_size)
 
       defp crux_total_pages(0, _), do: 1
 
-      defp crux_total_pages(total_entries, page_size),
-        do: (total_entries / page_size) |> Float.ceil() |> round()
+      defp crux_total_pages(total_entries, page_size) do
+        (total_entries / page_size) |> Float.ceil() |> round()
+      end
     end
   end
 end
