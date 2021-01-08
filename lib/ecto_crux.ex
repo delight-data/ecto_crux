@@ -537,10 +537,8 @@ defmodule EctoCrux do
       def page_to_offset(page, page_size) when is_integer(page) and is_integer(page_size),
         do: page_size * (page - 1)
 
-      def offset_to_page(0, page_size) when is_integer(page_size), do: 1
-
       def offset_to_page(offset, page_size) when is_integer(offset) and is_integer(page_size),
-        do: (offset / page_size) |> Float.ceil() |> round()
+        do: (offset / page_size + 1) |> Float.floor() |> round()
 
       # remove all keys used by crux before being given to Repo
       defp crux_clean_opts(opts) when is_list(opts),
@@ -566,22 +564,23 @@ defmodule EctoCrux do
         page_size = crux_page_size(opts)
         total_entries = count(query, to_keyword(opts))
         total_pages = crux_total_pages(total_entries, page_size)
+        page = min(page, total_pages)
 
         meta = %{
           page_size: page_size,
           total_entries: total_entries,
           total_pages: total_pages,
-          page: if(page > total_pages, do: total_pages, else: page)
+          page: page
         }
 
-        do_crux_paginate(query, page_to_offset(meta.page, page_size), meta)
+        do_crux_paginate(query, page_to_offset(page, page_size), meta)
       end
 
       defp crux_paginate(%Ecto.Query{} = query, %{offset: offset} = opts)
            when is_integer(offset) and offset >= 0 do
         page_size = crux_page_size(opts)
         total_entries = count(query, to_keyword(opts))
-        offset = if offset > total_entries, do: total_entries, else: offset
+        offset = min(offset, total_entries)
 
         meta = %{
           page_size: page_size,
@@ -598,12 +597,12 @@ defmodule EctoCrux do
       defp do_crux_paginate(
              %Ecto.Query{} = query,
              offset,
-             meta
+             %{page_size: page_size, total_entries: _, total_pages: _, page: _} = meta
            ) do
         query =
           query
           |> offset(^offset)
-          |> limit(^meta.page_size)
+          |> limit(^page_size)
 
         {:has_pagination, query, meta}
       end
