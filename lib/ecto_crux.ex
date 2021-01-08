@@ -206,8 +206,9 @@ defmodule EctoCrux do
             ) :: {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
       def unquote(:create_if_not_exist)(presence_attrs, creation_attrs, opts)
           when is_map(creation_attrs) and is_list(opts) do
-        blob = exist?(presence_attrs, opts)
-        if blob, do: {:ok, blob}, else: create(creation_attrs, opts)
+        if exist?(presence_attrs, opts),
+          do: {:ok, get_by(presence_attrs, opts)},
+          else: create(creation_attrs, opts)
       end
 
       ######################################################################################
@@ -451,15 +452,15 @@ defmodule EctoCrux do
       end
 
       @doc """
-      Test if an entry with <presence_attrs> exist
+      Test if an entry with <presence_attrs> exists
       """
       @spec exist?(presence_attrs :: map(), opts :: Keyword.t()) :: @schema_module.t() | nil
       def unquote(:exist?)(presence_attrs, opts \\ []) do
         presence_attrs = to_keyword(presence_attrs)
 
-        @schema_module
+        from(schema in @schema_module)
         |> where(^presence_attrs)
-        |> @repo.one(crux_clean_opts(opts))
+        |> @repo.exists?(crux_clean_opts(opts))
       end
 
       @doc """
