@@ -292,10 +292,9 @@ defmodule EctoCrux do
 
       """
       def unquote(:find_by)(filters, opts) when is_list(filters) do
-        query =
-          @schema_module
-          |> where(^filters)
-          |> find_by(opts)
+        from(schema in @schema_module)
+        |> where(^filters)
+        |> find_by(opts)
       end
 
       @doc """
