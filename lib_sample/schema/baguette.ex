@@ -5,7 +5,8 @@ defmodule EctoCrux.Schema.Baguette do
   import Ecto.Changeset
 
   schema "baguettes" do
-    field(:name)
+    field(:name, :string)
+    field(:kind, :string)
   end
 
   def changeset(user, params \\ %{}) do
