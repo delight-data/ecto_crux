@@ -293,7 +293,7 @@ defmodule EctoCrux do
 
       """
       def unquote(:find_by)(filters, opts) when is_list(filters) do
-        from(schema in @schema_module)
+        @init_query
         |> where(^filters)
         |> find_by(opts)
       end
@@ -458,7 +458,7 @@ defmodule EctoCrux do
       def unquote(:exist?)(presence_attrs, opts \\ []) do
         presence_attrs = to_keyword(presence_attrs)
 
-        from(schema in @schema_module)
+        @init_query
         |> where(^presence_attrs)
         |> @repo.exists?(crux_clean_opts(opts))
       end
