@@ -102,6 +102,8 @@ defmodule EctoCrux do
       @page_size args[:page_size] ||
                    Application.get_all_env(:ecto_crux)[:page_size] ||
                    50
+      # allow to not defined functions that are not defined when using Repo with a read_only mode
+      @read_only args[:read_only] || false
 
       ######################################################################################
       # prepared queries
@@ -123,6 +125,9 @@ defmodule EctoCrux do
       @doc "default page size if using pagination"
       def unquote(:page_size)(), do: @page_size
 
+      @doc "value of read_only mode"
+      def unquote(:read_only)(), do: @read_only
+
       @doc "call schema_module changeset method"
       def unquote(:change)(blob, attrs \\ %{}), do: @schema_module.changeset(blob, attrs)
 
@@ -130,29 +135,30 @@ defmodule EctoCrux do
       # eq: from e in @schema_module
       def init_query(), do: @init_query
 
-      ######################################################################################
-      # CREATE ONE
+      unless @read_only do
+        ######################################################################################
+        # CREATE ONE
 
-      @doc """
-      [Repo proxy of [insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)] Create (insert) a new baguette from attrs
+        @doc """
+        [Repo proxy of [insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)] Create (insert) a new baguette from attrs
 
-          # Create a new baguette with `:kind` value set to `:tradition`
-          {:ok, baguette} = Baguettes.create(%{kind: :tradition})
+            # Create a new baguette with `:kind` value set to `:tradition`
+            {:ok, baguette} = Baguettes.create(%{kind: :tradition})
 
-      ## Options
-        @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
+        ## Options
+          @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
 
-      """
-      @spec create(attrs :: map(), opts :: Keyword.t()) ::
-              {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create)(attrs \\ %{}, opts \\ []) do
-        %@schema_module{}
-        |> @schema_module.changeset(attrs)
-        |> @repo.insert(crux_clean_opts(opts))
-      end
+        """
+        @spec create(attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create)(attrs \\ %{}, opts \\ []) do
+          %@schema_module{}
+          |> @schema_module.changeset(attrs)
+          |> @repo.insert(crux_clean_opts(opts))
+        end
 
-      @doc """
-      Create (insert) a baguette from attrs if it doesn't exist
+        @doc """
+        Create (insert) a baguette from attrs if it doesn't exist
 
           # Create a new baguette with `:kind` value set to `:tradition`
           baguette = Baguettes.create(%{kind: :tradition})
@@ -160,55 +166,92 @@ defmodule EctoCrux do
           {:ok, another_ baguette} = Baguettes.create_if_not_exist(%{kind: :tradition})
           # `baguette` and `another_baguette` are the same `Baguette`
 
-      ## Options
+        ## Options
         @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
-      """
-      @spec create_if_not_exist(attrs :: map()) ::
-              {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create_if_not_exist)(attrs), do: create_if_not_exist(attrs, attrs)
+        """
+        @spec create_if_not_exist(attrs :: map()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(attrs), do: create_if_not_exist(attrs, attrs)
 
-      @doc """
-      [Repo] Create (insert) a baguette from attrs if it doesn't exist
+        @doc """
+        [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
-      Like `create_if_not_exist/1` but you can specify options (like prefix) to give to ecto
-      """
-      @spec create_if_not_exist(attrs :: map(), opts :: Keyword.t()) ::
-              {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create_if_not_exist)(attrs, opts) when is_list(opts),
-        do: create_if_not_exist(attrs, attrs, opts)
+        Like `create_if_not_exist/1` but you can specify options (like prefix) to give to ecto
+        """
+        @spec create_if_not_exist(attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(attrs, opts) when is_list(opts),
+          do: create_if_not_exist(attrs, attrs, opts)
 
-      @doc """
-      [Repo] Create (insert) a baguette from attrs if it doesn't exist
+        @doc """
+        [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
-      Behave like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
+        Behave like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
 
-      ## Options
+        ## Options
         @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
-      """
-      @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
-              {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create_if_not_exist)(presence_attrs, creation_attrs)
-          when is_map(creation_attrs),
-          do: create_if_not_exist(presence_attrs, creation_attrs, [])
+        """
+        @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs)
+            when is_map(creation_attrs),
+            do: create_if_not_exist(presence_attrs, creation_attrs, [])
 
-      @doc """
-      [Repo] Create (insert) a baguette from attrs if it doesn't exist
+        @doc """
+        [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
-      Behave like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
+        Behave like `create_if_not_exist/1` but you can specify attrs for the presence test, and creation attrs.
 
-      ## Options
+        ## Options
         @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
-      """
-      @spec create_if_not_exist(
-              presence_attrs :: map(),
-              creation_attrs :: map(),
-              opts :: Keyword.t()
-            ) :: {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:create_if_not_exist)(presence_attrs, creation_attrs, opts)
-          when is_map(creation_attrs) and is_list(opts) do
-        if exist?(presence_attrs, opts),
-          do: {:ok, get_by(presence_attrs, opts)},
-          else: create(creation_attrs, opts)
+        """
+        @spec create_if_not_exist(
+                presence_attrs :: map(),
+                creation_attrs :: map(),
+                opts :: Keyword.t()
+              ) :: {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs, opts)
+            when is_map(creation_attrs) and is_list(opts) do
+          if exist?(presence_attrs, opts),
+            do: {:ok, get_by(presence_attrs, opts)},
+            else: create(creation_attrs, opts)
+        end
+
+        ######################################################################################
+        # UPDATE
+
+        @doc """
+        [Repo proxy] Updates a changeset using its primary key.
+
+            {:ok, updated_baguette} = Baguettes.update(baguette, %{kind: "best"})
+
+        ## Options
+          * @see [Repo.update/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:update/2)
+        """
+        @spec update(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:update)(blob, attrs, opts \\ []) do
+          blob
+          |> @schema_module.changeset(attrs)
+          |> @repo.update(crux_clean_opts(opts))
+        end
+
+        ######################################################################################
+        # DELETE
+
+        @doc """
+        [Repo proxy] Deletes a struct using its primary key.
+
+          {:ok, deleted_baguette} = Baguettes.delete(baguette)
+
+        ## Options
+        * @see [Repo.delete/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:delete/2)
+        """
+        @spec delete(blob :: @schema_module.t(), opts :: Keyword.t()) ::
+                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        def unquote(:delete)(blob, opts \\ []), do: @repo.delete(blob, opts)
+
+        # idea: delete all, soft delete using ecto_soft_delete
       end
 
       ######################################################################################
@@ -270,6 +313,29 @@ defmodule EctoCrux do
       # READ MULTI
 
       @doc """
+      [Repo] Fetches all results using the query.
+          query = from b in Baguette, where :kind in ["tradition"]
+          best_baguettes = Baguettes.find_by(query)
+      """
+      def unquote(:find_by)(%Ecto.Query{} = query) do
+        query
+        |> find_by([])
+      end
+
+      @doc """
+      [Repo] Fetches all results using the query, with opts
+          query = from b in Baguette, where :kind in ["tradition"]
+          best_baguettes = Baguettes.find_by(query, prefix: "francaise")
+
+      ## Options
+        * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
+      """
+      def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
+        query
+        |> find_by(to_keyword(opts))
+      end
+
+      @doc """
       [Repo] Fetches all results from the filter clauses.
 
           best_baguettes = Baguettes.find_by(kind: "best")
@@ -296,29 +362,6 @@ defmodule EctoCrux do
         @init_query
         |> where(^filters)
         |> find_by(opts)
-      end
-
-      @doc """
-      [Repo] Fetches all results using the query.
-          query = from b in Baguette, where :kind in ["tradition"]
-          best_baguettes = Baguettes.find_by(query)
-      """
-      def unquote(:find_by)(%Ecto.Query{} = query) do
-        query
-        |> find_by([])
-      end
-
-      @doc """
-      [Repo] Fetches all results using the query, with opts
-          query = from b in Baguette, where :kind in ["tradition"]
-          best_baguettes = Baguettes.find_by(query, prefix: "francaise")
-
-      ## Options
-        * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
-      """
-      def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
-        query
-        |> find_by(to_keyword(opts))
       end
 
       def unquote(:find_by)(%Ecto.Query{} = query, opts) do
@@ -396,42 +439,6 @@ defmodule EctoCrux do
         |> crux_only_delete_if_requested(map_opts)
         |> @repo.stream(crux_clean_opts(opts))
       end
-
-      ######################################################################################
-      # UPDATE
-
-      @doc """
-      [Repo proxy] Updates a changeset using its primary key.
-
-          {:ok, updated_baguette} = Baguettes.update(baguette, %{kind: "best"})
-
-      ## Options
-        * @see [Repo.update/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:update/2)
-      """
-      @spec update(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) ::
-              {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:update)(blob, attrs, opts \\ []) do
-        blob
-        |> @schema_module.changeset(attrs)
-        |> @repo.update(crux_clean_opts(opts))
-      end
-
-      ######################################################################################
-      # DELETE
-
-      @doc """
-      [Repo proxy] Deletes a struct using its primary key.
-
-          {:ok, deleted_baguette} = Baguettes.delete(baguette)
-
-      ## Options
-        * @see [Repo.delete/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:delete/2)
-      """
-      @spec delete(blob :: @schema_module.t(), opts :: Keyword.t()) ::
-              {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-      def unquote(:delete)(blob, opts \\ []), do: @repo.delete(blob, opts)
-
-      # idea: delete all, soft delete using ecto_soft_delete
 
       ######################################################################################
       # SUGAR
