@@ -270,6 +270,29 @@ defmodule EctoCrux do
       # READ MULTI
 
       @doc """
+      [Repo] Fetches all results using the query.
+          query = from b in Baguette, where :kind in ["tradition"]
+          best_baguettes = Baguettes.find_by(query)
+      """
+      def unquote(:find_by)(%Ecto.Query{} = query) do
+        query
+        |> find_by([])
+      end
+
+      @doc """
+      [Repo] Fetches all results using the query, with opts
+          query = from b in Baguette, where :kind in ["tradition"]
+          best_baguettes = Baguettes.find_by(query, prefix: "francaise")
+
+      ## Options
+        * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
+      """
+      def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
+        query
+        |> find_by(to_keyword(opts))
+      end
+
+      @doc """
       [Repo] Fetches all results from the filter clauses.
 
           best_baguettes = Baguettes.find_by(kind: "best")
@@ -296,29 +319,6 @@ defmodule EctoCrux do
         @init_query
         |> where(^filters)
         |> find_by(opts)
-      end
-
-      @doc """
-      [Repo] Fetches all results using the query.
-          query = from b in Baguette, where :kind in ["tradition"]
-          best_baguettes = Baguettes.find_by(query)
-      """
-      def unquote(:find_by)(%Ecto.Query{} = query) do
-        query
-        |> find_by([])
-      end
-
-      @doc """
-      [Repo] Fetches all results using the query, with opts
-          query = from b in Baguette, where :kind in ["tradition"]
-          best_baguettes = Baguettes.find_by(query, prefix: "francaise")
-
-      ## Options
-        * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
-      """
-      def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
-        query
-        |> find_by(to_keyword(opts))
       end
 
       def unquote(:find_by)(%Ecto.Query{} = query, opts) do
