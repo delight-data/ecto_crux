@@ -335,35 +335,6 @@ defmodule EctoCrux do
         |> find_by(to_keyword(opts))
       end
 
-      @doc """
-      [Repo] Fetches all results from the filter clauses.
-
-          best_baguettes = Baguettes.find_by(kind: "best")
-      """
-      @spec find_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
-
-      def unquote(:find_by)(filters) when is_map(filters) do
-        filters
-        |> to_keyword()
-        |> find_by()
-      end
-
-      def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
-
-      @doc """
-      [Repo] Fetches all results from the filter clauses, with opts
-          best_baguettes = Baguettes.find_by(kind: "best", prefix: "francaise")
-
-      ## Options
-        * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
-
-      """
-      def unquote(:find_by)(filters, opts) when is_list(filters) do
-        @init_query
-        |> where(^filters)
-        |> find_by(opts)
-      end
-
       def unquote(:find_by)(%Ecto.Query{} = query, opts) do
         map_opts = to_map(opts)
 
@@ -391,6 +362,35 @@ defmodule EctoCrux do
               total_pages: meta.total_pages
             }
         end
+      end
+
+      @doc """
+      [Repo] Fetches all results from the filter clauses.
+
+          best_baguettes = Baguettes.find_by(kind: "best")
+      """
+      @spec find_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
+
+      def unquote(:find_by)(filters) when is_map(filters) do
+        filters
+        |> to_keyword()
+        |> find_by()
+      end
+
+      def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
+
+      @doc """
+      [Repo] Fetches all results from the filter clauses, with opts
+          best_baguettes = Baguettes.find_by(kind: "best", prefix: "francaise")
+
+      ## Options
+        * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
+
+      """
+      def unquote(:find_by)(filters, opts) when is_list(filters) do
+        @init_query
+        |> where(^filters)
+        |> find_by(opts)
       end
 
       @spec find_by(filters :: Keyword.t() | map(), opts :: map()) :: [@schema_module.t()]
