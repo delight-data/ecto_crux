@@ -491,11 +491,7 @@ defmodule EctoCrux do
       @spec count(query :: Ecto.Query.t(), opts :: Keyword.t()) :: integer()
       def unquote(:count)(%Ecto.Query{} = query, opts) do
         query
-        |> exclude(:preload)
-        |> exclude(:order_by)
-        |> exclude(:select)
-        |> select(count("*"))
-        |> @repo.one(crux_clean_opts(opts))
+        |> @repo.aggregate(:count, crux_clean_opts(opts))
       end
 
       @doc """
