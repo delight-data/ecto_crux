@@ -461,7 +461,7 @@ defmodule EctoCrux do
       @doc """
       Test if an entry with <presence_attrs> exists
       """
-      @spec exist?(presence_attrs :: map(), opts :: Keyword.t()) :: @schema_module.t() | nil
+      @spec exist?(presence_attrs :: map(), opts :: Keyword.t()) :: boolean()
       def unquote(:exist?)(presence_attrs, opts \\ []) do
         presence_attrs = to_keyword(presence_attrs)
 
