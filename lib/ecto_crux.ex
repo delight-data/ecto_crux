@@ -112,7 +112,7 @@ defmodule EctoCrux do
       ######################################################################################
 
       import Ecto.Query,
-        only: [from: 1, from: 2, where: 2, offset: 2, limit: 2, exclude: 2, select: 2]
+        only: [from: 1, from: 2, where: 2, offset: 2, limit: 2, exclude: 2, select: 2, order_by: 3]
 
       alias Ecto.{Query, Queryable}
 
@@ -342,7 +342,10 @@ defmodule EctoCrux do
           query
           |> crux_filter_away_delete_if_requested(map_opts)
           |> crux_only_delete_if_requested(map_opts)
+          |> order_by_if_requested(map_opts)
           |> crux_paginate(map_opts)
+
+          # order by
 
         entries =
           query
@@ -545,7 +548,7 @@ defmodule EctoCrux do
 
       # remove all keys used by crux before being given to Repo
       defp crux_clean_opts(opts) when is_list(opts),
-        do: Keyword.drop(opts, [:exclude_deleted, :only_deleted, :offset, :page, :page_size])
+        do: Keyword.drop(opts, [:exclude_deleted, :only_deleted, :offset, :page, :page_size, :order_by])
 
       # soft delete (if you use ecto_soft_delete on the field deleted_at)
       defp crux_filter_away_delete_if_requested(
@@ -559,7 +562,15 @@ defmodule EctoCrux do
       defp crux_only_delete_if_requested(%Ecto.Query{} = query, %{only_deleted: true} = opts),
         do: from(e in query, where: not is_nil(e.deleted_at))
 
-      defp crux_only_delete_if_requested(%Ecto.Query{} = query, %{} = opts), do: query
+      defp crux_only_delete_if_requested(%Ecto.Query{} = query, %{} = _opts), do: query
+
+      defp order_by_if_requested(%Ecto.Query{} = query, %{order_by: order_by} = opts) do
+        query
+        |> order_by(asc: :order_by)
+      end
+
+      defp order_by_if_requested(%Ecto.Query{} = query, _opts), do: query
+
 
       # pagination
       defp crux_paginate(%Ecto.Query{} = query, %{page: page} = opts)
