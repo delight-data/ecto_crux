@@ -128,14 +128,14 @@ defmodule EctoCrux do
       @doc "value of read_only mode"
       def unquote(:read_only)(), do: @read_only
 
-      @doc "call schema_module changeset method"
-      def unquote(:change)(blob, attrs \\ %{}), do: @schema_module.changeset(blob, attrs)
-
       @doc "create a new query using schema module"
       # eq: from e in @schema_module
       def init_query(), do: @init_query
 
       unless @read_only do
+        @doc "call schema_module changeset method"
+        def unquote(:change)(blob, attrs \\ %{}), do: @schema_module.changeset(blob, attrs)
+
         ######################################################################################
         # CREATE ONE
 
