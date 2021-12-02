@@ -5,7 +5,7 @@ defmodule EctoCrux.MixProject do
     [
       app: :ecto_crux,
       name: "EctoCrux",
-      version: "1.2.6",
+      version: "1.2.7",
       elixir: "~> 1.8",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
