@@ -309,6 +309,21 @@ defmodule EctoCrux do
         |> crux_build_preload(opts[:preloads])
       end
 
+      @doc """
+      [Repo] Similar to get_by/2 but raises Ecto.NoResultsError if no record was found.
+
+      ## Options
+        * `preloads` - list of atom to preload
+        * @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
+      """
+      @spec get_by!(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
+              @schema_module.t()
+      def unquote(:get_by!)(clauses, opts \\ []) do
+        @schema_module
+        |> @repo.get_by!(clauses, crux_clean_opts(opts))
+        |> crux_build_preload(opts[:preloads])
+      end
+
       ######################################################################################
       # READ MULTI
 
