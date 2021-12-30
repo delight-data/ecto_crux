@@ -532,6 +532,26 @@ defmodule EctoCrux do
         |> count()
       end
 
+      @doc """
+      Create an atom-keyed map from the given map. 
+      If both a string and an atom keys are provided in the original map, atom key gets priority.
+
+          Baguettes.to_schema_atom_params(%{"kind" => "baguepi", :kind => "tradition", "half?" => true})
+          %{kind: "tradition"}
+      """
+      def unquote(:to_schema_atom_params)(string_keyed_map) when is_map(mixed_keyed_map) do
+        @schema_module.__schema__(:fields)
+        |> Enum.reduce(%{}, fn key, atom_keyed_map ->
+          string_key = Atom.to_string(key)
+
+          case mixed_keyed_map do
+            %{^key => v} -> Map.put(atom_keyed_map, key, v)
+            %{^string_key => v} -> Map.put(atom_keyed_map, key, v)
+            _ -> atom_keyed_map
+          end
+        end)
+      end
+
       ######################################################################################
       # PRIVATE
 
