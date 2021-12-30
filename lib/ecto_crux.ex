@@ -539,7 +539,7 @@ defmodule EctoCrux do
           Baguettes.to_schema_atom_params(%{"kind" => "baguepi", :kind => "tradition", "half?" => true})
           %{kind: "tradition"}
       """
-      def unquote(:to_schema_atom_params)(string_keyed_map) when is_map(mixed_keyed_map) do
+      def unquote(:to_schema_atom_params)(mixed_keyed_map) when is_map(mixed_keyed_map) do
         @schema_module.__schema__(:fields)
         |> Enum.reduce(%{}, fn key, atom_keyed_map ->
           string_key = Atom.to_string(key)
