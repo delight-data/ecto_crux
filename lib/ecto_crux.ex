@@ -538,9 +538,19 @@ defmodule EctoCrux do
 
           Baguettes.to_schema_atom_params(%{"kind" => "baguepi", :kind => "tradition", "half?" => true})
           %{kind: "tradition"}
+
+      ## Options
+        * `with_assoc` [optional] - add associations fields to the list of allowed fields, defaults to `true`.
       """
-      def unquote(:to_schema_atom_params)(mixed_keyed_map) when is_map(mixed_keyed_map) do
-        @schema_module.__schema__(:fields)
+      def unquote(:to_schema_atom_params)(mixed_keyed_map, opts \\ [with_assoc: true])
+          when is_map(mixed_keyed_map) and is_list(opts) do
+        case opts[:with_assoc] do
+          true ->
+            @schema_module.__schema__(:fields) ++ @schema_module.__schema__(:associations)
+
+          _ ->
+            @schema_module.__schema__(:fields)
+        end
         |> Enum.reduce(%{}, fn key, atom_keyed_map ->
           string_key = Atom.to_string(key)
 
