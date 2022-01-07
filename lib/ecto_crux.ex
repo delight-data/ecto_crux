@@ -267,7 +267,7 @@ defmodule EctoCrux do
 
       ## Options
         * `preloads` - list of atom to preload
-        * @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
+        * @see [Repo.get/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get/3)
 
       """
       @spec get(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
@@ -282,7 +282,7 @@ defmodule EctoCrux do
 
       ## Options
         * `preloads` - list of atom to preload
-        * @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
+        * @see [Repo.get!/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get/3)
 
       """
       @spec get!(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
@@ -299,7 +299,7 @@ defmodule EctoCrux do
 
       ## Options
         * `preloads` - list of atom to preload
-        * @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
+        * @see [Repo.get_by/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get_by/3)
       """
       @spec get_by(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
               @schema_module.t() | nil
@@ -314,7 +314,7 @@ defmodule EctoCrux do
 
       ## Options
         * `preloads` - list of atom to preload
-        * @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
+        * @see [Repo.get_by!/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get_by!/3)
       """
       @spec get_by!(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
               @schema_module.t()
@@ -501,7 +501,7 @@ defmodule EctoCrux do
           baguettes_count = Baguettes.count(query, prefix: "francaise")
 
       ## Options
-        * @see [Repo.one/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:one/2)
+        * @see [Repo.aggregate/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/3)
       """
       @spec count(query :: Ecto.Query.t(), opts :: Keyword.t()) :: integer()
       def unquote(:count)(%Ecto.Query{} = query, opts) do
@@ -514,7 +514,7 @@ defmodule EctoCrux do
           baguettes_count = Baguettes.count(prefix: "francaise")
 
       ## Options
-        * @see [Repo.one/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:one/2)
+        * @see [Repo.aggregate/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/3)
       """
       @spec count(opts :: Keyword.t()) :: integer()
       def unquote(:count)(opts) when is_list(opts) do
