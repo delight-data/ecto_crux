@@ -104,6 +104,7 @@ defmodule EctoCrux do
                    50
       # allow to not defined functions that are not defined when using Repo with a read_only mode
       @read_only args[:read_only] || false
+      @order_by args[:order_by] || nil
 
       ######################################################################################
       # prepared queries
@@ -361,6 +362,7 @@ defmodule EctoCrux do
 
         entries =
           query
+          |> crux_build_order_by(Keyword.get(opts, :order_by, @order_by))
           |> @repo.all(crux_clean_opts(opts))
           |> ensure_typed_list()
 
@@ -576,6 +578,9 @@ defmodule EctoCrux do
       defp crux_build_preload(blob, []), do: blob
       defp crux_build_preload(blob, preloads), do: preload(blob, preloads)
 
+      defp crux_build_order_by(blob, nil), do: blob
+      defp crux_build_order_by(blob, expr), do: Query.order_by(blob, ^expr)
+
       defp to_keyword(map) when is_map(map), do: map |> Enum.map(fn {k, v} -> {k, v} end)
       defp to_keyword(list) when is_list(list), do: list
 
@@ -590,7 +595,7 @@ defmodule EctoCrux do
 
       # remove all keys used by crux before being given to Repo
       defp crux_clean_opts(opts) when is_list(opts),
-        do: Keyword.drop(opts, [:exclude_deleted, :only_deleted, :offset, :page, :page_size])
+        do: Keyword.drop(opts, [:exclude_deleted, :only_deleted, :offset, :page, :page_size, :order_by])
 
       # soft delete (if you use ecto_soft_delete on the field deleted_at)
       defp crux_filter_away_delete_if_requested(
