@@ -24,6 +24,7 @@ defmodule EctoCrux do
   available parameters are:
     * `:repo` - specify repo to use to handle this queryable module
     * `:page_size` [optional] - default page size to use when using pagination if `page_size` is not specified
+    * `:order_by` - default order by expression, will be used in every find_by call
 
 
   ## tl;dr; example
@@ -36,6 +37,7 @@ defmodule EctoCrux do
     schema "baguettes" do
       field(:name, :string)
       field(:kind, :string)
+      field(:type, :string)
     end
 
     def changeset(user, params \\\\ %{}) do
@@ -48,7 +50,7 @@ defmodule EctoCrux do
 
   ```elixir
   defmodule MyApp.Schema.Baguettes do
-    use EctoCrux, module: MyApp.Schema.Baguette
+    use EctoCrux, module: MyApp.Schema.Baguette, order_by: [asc: :name]
 
     # tips: this module is also the perfect place to implement
     # all your custom accessors/operations arround this schema
@@ -86,6 +88,9 @@ defmodule EctoCrux do
     # find only baguepi baguettes that was soft deleted
     baguettes = Baguettes.find_by(%{kind: "baguepi"}, [only_deleted: true])
 
+    # find all baguepi baguetes ordered by `kind`, overrides the default `name` ordering
+    baguettes = Baguettes.find_by(%{type: "foo"}, [order_by: [asc: :kind]])
+
     # find all baguepi baguettes, within Repo prefix "francaise" and paginate
     %EctoCrux.Page{} = page = Baguettes.find_by(%{kind: "baguepi"}, [prefix: "francaise", page: 2, page_size: 15])
 
@@ -104,6 +109,7 @@ defmodule EctoCrux do
                    50
       # allow to not defined functions that are not defined when using Repo with a read_only mode
       @read_only args[:read_only] || false
+      @order_by args[:order_by] || nil
 
       ######################################################################################
       # prepared queries
@@ -127,6 +133,9 @@ defmodule EctoCrux do
 
       @doc "value of read_only mode"
       def unquote(:read_only)(), do: @read_only
+
+      @doc "value of default order by"
+      def unquote(:order_by)(), do: @order_by
 
       @doc "create a new query using schema module"
       # eq: from e in @schema_module
@@ -343,6 +352,7 @@ defmodule EctoCrux do
           best_baguettes = Baguettes.find_by(query, prefix: "francaise")
 
       ## Options
+        * `order_by` -  order_by expression, overrides default order_by for the crux usage
         * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
       """
       def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
@@ -361,6 +371,7 @@ defmodule EctoCrux do
 
         entries =
           query
+          |> crux_build_order_by(Keyword.get(opts, :order_by, @order_by))
           |> @repo.all(crux_clean_opts(opts))
           |> ensure_typed_list()
 
@@ -399,8 +410,8 @@ defmodule EctoCrux do
           best_baguettes = Baguettes.find_by(kind: "best", prefix: "francaise")
 
       ## Options
+        * `order_by` -  order_by expression, overrides default order_by for the crux usage
         * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
-
       """
       def unquote(:find_by)(filters, opts) when is_list(filters) do
         @init_query
@@ -424,6 +435,7 @@ defmodule EctoCrux do
           Baguettes.all(prefix: "francaise")
 
       ## Options
+        * `order_by` -  order_by expression, overrides default order_by for the crux usage
         * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
       """
       @spec all(opts :: Keyword.t()) :: [@schema_module.t()]
@@ -576,6 +588,9 @@ defmodule EctoCrux do
       defp crux_build_preload(blob, []), do: blob
       defp crux_build_preload(blob, preloads), do: preload(blob, preloads)
 
+      defp crux_build_order_by(blob, nil), do: blob
+      defp crux_build_order_by(blob, expr), do: Query.order_by(blob, ^expr)
+
       defp to_keyword(map) when is_map(map), do: map |> Enum.map(fn {k, v} -> {k, v} end)
       defp to_keyword(list) when is_list(list), do: list
 
@@ -590,7 +605,7 @@ defmodule EctoCrux do
 
       # remove all keys used by crux before being given to Repo
       defp crux_clean_opts(opts) when is_list(opts),
-        do: Keyword.drop(opts, [:exclude_deleted, :only_deleted, :offset, :page, :page_size])
+        do: Keyword.drop(opts, [:exclude_deleted, :only_deleted, :offset, :page, :page_size, :order_by])
 
       # soft delete (if you use ecto_soft_delete on the field deleted_at)
       defp crux_filter_away_delete_if_requested(
