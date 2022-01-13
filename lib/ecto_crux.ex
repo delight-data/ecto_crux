@@ -554,7 +554,13 @@ defmodule EctoCrux do
       def unquote(:count_by)(filters, opts \\ []) when is_list(opts) do
         @init_query
         |> where(^filters)
-        |> @repo.aggregate(:count, crux_clean_opts(opts))
+        |> count(opts)
+      end
+
+      def unquote(:count_by)(filters, opts \\ []) when is_map(filters) and when is_list(opts) do
+        filters
+        |> to_keyword()
+        |> count_by(opts)
       end
 
       @doc """
