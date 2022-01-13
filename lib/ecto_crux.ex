@@ -294,7 +294,7 @@ defmodule EctoCrux do
         * @see [Repo.get!/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get/3)
 
       """
-      @spec get!(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
+      @spec get!(id :: term, opts :: Keyword.t()) :: @schema_module.t()
       def unquote(:get!)(id, opts \\ []) do
         @schema_module
         |> @repo.get!(id, crux_clean_opts(opts))
