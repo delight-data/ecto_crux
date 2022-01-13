@@ -551,13 +551,14 @@ defmodule EctoCrux do
         * @see [Repo.aggregate/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/3)
       """
       @spec count_by(filters :: Keyword.t() | map(), opts :: Keyword.t()) :: integer()
-      def unquote(:count_by)(filters, opts \\ []) when is_list(opts) do
+      def unquote(:count_by)(filters, opts \\ [])
+      def unquote(:count_by)(filters, opts) when is_list(filters) and is_list(opts) do
         @init_query
         |> where(^filters)
         |> count(opts)
       end
 
-      def unquote(:count_by)(filters, opts \\ []) when is_map(filters) and when is_list(opts) do
+      def unquote(:count_by)(filters, opts) when is_map(filters) and is_list(opts) do
         filters
         |> to_keyword()
         |> count_by(opts)
