@@ -545,6 +545,19 @@ defmodule EctoCrux do
       end
 
       @doc """
+      Count number of entries complying with the filter clauses.
+
+      ## Options
+        * @see [Repo.aggregate/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/3)
+      """
+      @spec count_by(filters :: Keyword.t() | map(), opts :: Keyword.t()) :: integer()
+      def unquote(:count_by)(filters, opts \\ []) when is_list(opts) do
+        @init_query
+        |> where(^filters)
+        |> @repo.aggregate(:count, crux_clean_opts(opts))
+      end
+
+      @doc """
       Create an atom-keyed map from the given map. 
       If both a string and an atom keys are provided in the original map, atom key gets priority.
 
