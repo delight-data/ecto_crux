@@ -258,6 +258,22 @@ defmodule EctoCrux do
           |> @repo.update(crux_clean_opts(opts))
         end
 
+        @doc """
+        [Repo proxy] Same as update/2 but return the struct or raises if the changeset is invalid
+
+            updated_baguette = Baguettes.update!(baguette, %{kind: "best"})
+
+        ## Options
+          * @see [Repo.update!/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:update!/2)
+        """
+        @spec update!(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) :: @schema_module.t()
+        def unquote(:update!)(blob, attrs, opts \\ []) do
+          blob
+          |> @schema_module.changeset(attrs)
+          |> @repo.update!(crux_clean_opts(opts))
+        end
+
+
         ######################################################################################
         # DELETE
 
