@@ -134,7 +134,6 @@ defmodule EctoCrux do
       # add more here if new "write" functions are added
       @read_only_excepts (@read_only &&
                             [
-                              change: 2,
                               create: 2,
                               create_if_not_exist: 1,
                               create_if_not_exist: 2,
