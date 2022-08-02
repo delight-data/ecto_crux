@@ -33,7 +33,8 @@ defmodule EctoCrux.MixProject do
   defp deps do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:ecto_sql, "~> 3.5", only: [:dev, :test]}
+      {:ecto_sql, "~> 3.5", only: [:dev, :test]},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
     ]
   end
 
