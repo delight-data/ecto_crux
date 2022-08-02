@@ -427,6 +427,7 @@ defmodule EctoCrux do
             query = from b in Baguette, where :kind in ["tradition"]
             best_baguettes = Baguettes.find_by(query)
         """
+        @spec find_by(Ecto.Query.t() | keyword() | map()) :: [@schema_module.t()]
         def unquote(:find_by)(%Ecto.Query{} = query) do
           query
           |> find_by([])
@@ -444,6 +445,9 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
+        @spec find_by(Ecto.Query.t() | keyword() | map(), keyword() | map()) :: [
+                @schema_module.t()
+              ]
         def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
           query
           |> find_by(to_keyword(opts))
@@ -487,7 +491,6 @@ defmodule EctoCrux do
 
             best_baguettes = Baguettes.find_by(kind: "best")
         """
-        @spec find_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
 
         def unquote(:find_by)(filters) when is_map(filters) do
           filters
@@ -514,7 +517,6 @@ defmodule EctoCrux do
           |> find_by(opts)
         end
 
-        @spec find_by(filters :: Keyword.t() | map(), opts :: map()) :: [@schema_module.t()]
         def unquote(:find_by)(filters, opts) when is_map(filters) do
           filters
           |> to_keyword()
