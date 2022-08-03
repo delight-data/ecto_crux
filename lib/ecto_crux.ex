@@ -432,6 +432,20 @@ defmodule EctoCrux do
           query
           |> find_by([])
         end
+
+        @doc """
+        [Repo] Fetches all results from the filter clauses.
+
+            best_baguettes = Baguettes.find_by(kind: "best")
+        """
+
+        def unquote(:find_by)(filters) when is_map(filters) do
+          filters
+          |> to_keyword()
+          |> find_by()
+        end
+
+        def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
       end
 
       unless excluded?(@except, :find_by, 2) do
@@ -504,22 +518,6 @@ defmodule EctoCrux do
           |> to_keyword()
           |> find_by(opts)
         end
-      end
-
-      unless excluded?(@except, :find_by, 1) do
-        @doc """
-        [Repo] Fetches all results from the filter clauses.
-
-            best_baguettes = Baguettes.find_by(kind: "best")
-        """
-
-        def unquote(:find_by)(filters) when is_map(filters) do
-          filters
-          |> to_keyword()
-          |> find_by()
-        end
-
-        def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
       end
 
       unless excluded?(@except, :all, 1) do
