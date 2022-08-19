@@ -427,10 +427,25 @@ defmodule EctoCrux do
             query = from b in Baguette, where :kind in ["tradition"]
             best_baguettes = Baguettes.find_by(query)
         """
+        @spec find_by(Ecto.Query.t() | keyword() | map()) :: [@schema_module.t()]
         def unquote(:find_by)(%Ecto.Query{} = query) do
           query
           |> find_by([])
         end
+
+        @doc """
+        [Repo] Fetches all results from the filter clauses.
+
+            best_baguettes = Baguettes.find_by(kind: "best")
+        """
+
+        def unquote(:find_by)(filters) when is_map(filters) do
+          filters
+          |> to_keyword()
+          |> find_by()
+        end
+
+        def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
       end
 
       unless excluded?(@except, :find_by, 2) do
@@ -444,6 +459,9 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
+        @spec find_by(Ecto.Query.t() | keyword() | map(), keyword() | map()) :: [
+                @schema_module.t()
+              ]
         def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
           query
           |> find_by(to_keyword(opts))
@@ -479,26 +497,7 @@ defmodule EctoCrux do
               }
           end
         end
-      end
 
-      unless excluded?(@except, :find_by, 1) do
-        @doc """
-        [Repo] Fetches all results from the filter clauses.
-
-            best_baguettes = Baguettes.find_by(kind: "best")
-        """
-        @spec find_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
-
-        def unquote(:find_by)(filters) when is_map(filters) do
-          filters
-          |> to_keyword()
-          |> find_by()
-        end
-
-        def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
-      end
-
-      unless excluded?(@except, :find_by, 2) do
         @doc """
         [Repo] Fetches all results from the filter clauses, with opts
             best_baguettes = Baguettes.find_by(kind: "best", prefix: "francaise")
@@ -514,7 +513,6 @@ defmodule EctoCrux do
           |> find_by(opts)
         end
 
-        @spec find_by(filters :: Keyword.t() | map(), opts :: map()) :: [@schema_module.t()]
         def unquote(:find_by)(filters, opts) when is_map(filters) do
           filters
           |> to_keyword()

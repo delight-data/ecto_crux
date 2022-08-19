@@ -4,6 +4,12 @@ defmodule EctoCrux.Schema.Baguette do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %EctoCrux.Schema.Baguette{
+    id: integer(),
+    kind: String.t(),
+    name: String.t()
+  }
+
   schema "baguettes" do
     field(:name, :string)
     field(:kind, :string)
