@@ -119,7 +119,7 @@ defmodule EctoCrux do
   def excluded?(except, method, args), do: args in Keyword.get_values(except, method)
 
   defmacro __using__(args) do
-    quote(bind_quoted: [args: args]) do
+    quote bind_quoted: [args: args] do
       import EctoCrux, only: [excluded?: 3]
 
       @schema_module args[:module]
@@ -156,33 +156,33 @@ defmodule EctoCrux do
       alias Ecto.{Query, Queryable}
 
       @doc "schema module is it associated to"
-      def unquote(:schema_module)(), do: @schema_module
+      def schema_module, do: @schema_module
 
       @doc "configured repo to use"
-      def unquote(:repo)(), do: @repo
+      def repo, do: @repo
 
       @doc "default page size if using pagination"
-      def unquote(:page_size)(), do: @page_size
+      def page_size, do: @page_size
 
       @doc "value of read_only mode"
-      def unquote(:read_only)(), do: @read_only
+      def read_only, do: @read_only
 
       @doc "value of default order by"
-      def unquote(:order_by)(), do: @order_by
+      def order_by, do: @order_by
 
       @doc "value of default select"
-      def unquote(:select)(), do: @select
+      def select, do: @select
 
       @doc "value of except"
-      def unquote(:except)(), do: @except
+      def except, do: @except
 
       @doc "create a new query using schema module"
       # eq: from e in @schema_module
-      def init_query(), do: @init_query
+      def init_query, do: @init_query
 
       unless excluded?(@except, :change, 2) do
         @doc "call schema_module changeset method"
-        def unquote(:change)(blob, attrs \\ %{}), do: @schema_module.changeset(blob, attrs)
+        def change(blob, attrs \\ %{}), do: @schema_module.changeset(blob, attrs)
       end
 
       ######################################################################################
@@ -201,7 +201,7 @@ defmodule EctoCrux do
         """
         @spec create(attrs :: map(), opts :: Keyword.t()) ::
                 {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:create)(attrs \\ %{}, opts \\ []) do
+        def create(attrs \\ %{}, opts \\ []) do
           %@schema_module{}
           |> @schema_module.changeset(attrs)
           |> @repo.insert(crux_clean_opts(opts))
@@ -223,7 +223,7 @@ defmodule EctoCrux do
         """
         @spec create_if_not_exist(attrs :: map()) ::
                 {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:create_if_not_exist)(attrs), do: create_if_not_exist(attrs, attrs)
+        def create_if_not_exist(attrs), do: create_if_not_exist(attrs, attrs)
       end
 
       unless excluded?(@except, :create_if_not_exist, 2) do
@@ -234,7 +234,7 @@ defmodule EctoCrux do
         """
         @spec create_if_not_exist(attrs :: map(), opts :: Keyword.t()) ::
                 {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:create_if_not_exist)(attrs, opts) when is_list(opts),
+        def create_if_not_exist(attrs, opts) when is_list(opts),
           do: create_if_not_exist(attrs, attrs, opts)
 
         @doc """
@@ -247,7 +247,7 @@ defmodule EctoCrux do
         """
         @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
                 {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs)
+        def create_if_not_exist(presence_attrs, creation_attrs)
             when is_map(creation_attrs),
             do: create_if_not_exist(presence_attrs, creation_attrs, [])
       end
@@ -266,7 +266,7 @@ defmodule EctoCrux do
                 creation_attrs :: map(),
                 opts :: Keyword.t()
               ) :: {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:create_if_not_exist)(presence_attrs, creation_attrs, opts)
+        def create_if_not_exist(presence_attrs, creation_attrs, opts)
             when is_map(creation_attrs) and is_list(opts) do
           if exist?(presence_attrs, opts),
             do: {:ok, get_by(presence_attrs, opts)},
@@ -288,7 +288,7 @@ defmodule EctoCrux do
         """
         @spec update(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) ::
                 {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:update)(blob, attrs, opts \\ []) do
+        def update(blob, attrs, opts \\ []) do
           blob
           |> @schema_module.changeset(attrs)
           |> @repo.update(crux_clean_opts(opts))
@@ -306,7 +306,7 @@ defmodule EctoCrux do
         """
         @spec update!(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) ::
                 @schema_module.t()
-        def unquote(:update!)(blob, attrs, opts \\ []) do
+        def update!(blob, attrs, opts \\ []) do
           blob
           |> @schema_module.changeset(attrs)
           |> @repo.update!(crux_clean_opts(opts))
@@ -327,7 +327,7 @@ defmodule EctoCrux do
         """
         @spec delete(blob :: @schema_module.t(), opts :: Keyword.t()) ::
                 {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def unquote(:delete)(blob, opts \\ []), do: @repo.delete(blob, opts)
+        def delete(blob, opts \\ []), do: @repo.delete(blob, opts)
       end
 
       # idea: delete all, soft delete using ecto_soft_delete
@@ -351,7 +351,7 @@ defmodule EctoCrux do
 
         """
         @spec get(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
-        def unquote(:get)(id, opts \\ []) do
+        def get(id, opts \\ []) do
           @schema_module
           |> crux_build_select(Keyword.get(opts, :select, @select))
           |> @repo.get(id, crux_clean_opts(opts))
@@ -370,7 +370,7 @@ defmodule EctoCrux do
 
         """
         @spec get!(id :: term, opts :: Keyword.t()) :: @schema_module.t()
-        def unquote(:get!)(id, opts \\ []) do
+        def get!(id, opts \\ []) do
           @schema_module
           |> crux_build_select(Keyword.get(opts, :select, @select))
           |> @repo.get!(id, crux_clean_opts(opts))
@@ -391,7 +391,7 @@ defmodule EctoCrux do
         """
         @spec get_by(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
                 @schema_module.t() | nil
-        def unquote(:get_by)(clauses, opts \\ []) do
+        def get_by(clauses, opts \\ []) do
           @schema_module
           |> crux_build_select(Keyword.get(opts, :select, @select))
           |> @repo.get_by(clauses, crux_clean_opts(opts))
@@ -410,7 +410,7 @@ defmodule EctoCrux do
         """
         @spec get_by!(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
                 @schema_module.t()
-        def unquote(:get_by!)(clauses, opts \\ []) do
+        def get_by!(clauses, opts \\ []) do
           @schema_module
           |> crux_build_select(Keyword.get(opts, :select, @select))
           |> @repo.get_by!(clauses, crux_clean_opts(opts))
@@ -427,7 +427,7 @@ defmodule EctoCrux do
             query = from b in Baguette, where :kind in ["tradition"]
             best_baguettes = Baguettes.find_by(query)
         """
-        def unquote(:find_by)(%Ecto.Query{} = query) do
+        def find_by(%Ecto.Query{} = query) do
           query
           |> find_by([])
         end
@@ -444,12 +444,12 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
-        def unquote(:find_by)(%Ecto.Query{} = query, opts) when is_map(opts) do
+        def find_by(%Ecto.Query{} = query, opts) when is_map(opts) do
           query
           |> find_by(to_keyword(opts))
         end
 
-        def unquote(:find_by)(%Ecto.Query{} = query, opts) do
+        def find_by(%Ecto.Query{} = query, opts) do
           map_opts = to_map(opts)
 
           {pagination, query, meta} =
@@ -489,13 +489,13 @@ defmodule EctoCrux do
         """
         @spec find_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
 
-        def unquote(:find_by)(filters) when is_map(filters) do
+        def find_by(filters) when is_map(filters) do
           filters
           |> to_keyword()
           |> find_by()
         end
 
-        def unquote(:find_by)(filters) when is_list(filters), do: find_by(filters, [])
+        def find_by(filters) when is_list(filters), do: find_by(filters, [])
       end
 
       unless excluded?(@except, :find_by, 2) do
@@ -508,14 +508,14 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
-        def unquote(:find_by)(filters, opts) when is_list(filters) do
+        def find_by(filters, opts) when is_list(filters) do
           @init_query
           |> where(^filters)
           |> find_by(opts)
         end
 
         @spec find_by(filters :: Keyword.t() | map(), opts :: map()) :: [@schema_module.t()]
-        def unquote(:find_by)(filters, opts) when is_map(filters) do
+        def find_by(filters, opts) when is_map(filters) do
           filters
           |> to_keyword()
           |> find_by(opts)
@@ -537,7 +537,7 @@ defmodule EctoCrux do
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
         @spec all(opts :: Keyword.t()) :: [@schema_module.t()]
-        def unquote(:all)(opts \\ []) when is_list(opts), do: find_by(%{}, opts)
+        def all(opts \\ []) when is_list(opts), do: find_by(%{}, opts)
       end
 
       unless excluded?(@except, :stream, 2) do
@@ -557,7 +557,7 @@ defmodule EctoCrux do
           * @see [Repo.stream/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:stream/2)
         """
         @spec stream(filters :: Keyword.t(), opts :: Keyword.t()) :: Enum.t()
-        def unquote(:stream)(filters, opts \\ []) do
+        def stream(filters, opts \\ []) do
           map_opts = to_map(opts)
 
           @schema_module
@@ -583,7 +583,7 @@ defmodule EctoCrux do
         @spec preload(structs_or_struct_or_nil, preloads :: term(), opts :: Keyword.t()) ::
                 structs_or_struct_or_nil
               when structs_or_struct_or_nil: [@schema_module.t()] | @schema_module.t() | nil
-        def unquote(:preload)(blob, preloads, opts \\ []) do
+        def preload(blob, preloads, opts \\ []) do
           blob |> @repo.preload(preloads, opts)
         end
       end
@@ -593,7 +593,7 @@ defmodule EctoCrux do
         Test if an entry with <presence_attrs> exists
         """
         @spec exist?(presence_attrs :: map(), opts :: Keyword.t()) :: boolean()
-        def unquote(:exist?)(presence_attrs, opts \\ []) do
+        def exist?(presence_attrs, opts \\ []) do
           presence_attrs = to_keyword(presence_attrs)
 
           @init_query
@@ -609,7 +609,7 @@ defmodule EctoCrux do
             baguettes_count = Baguettes.count(query)
         """
         @spec count(query :: Ecto.Query.t()) :: integer()
-        def unquote(:count)(%Ecto.Query{} = query) do
+        def count(%Ecto.Query{} = query) do
           count(query, [])
         end
       end
@@ -624,7 +624,7 @@ defmodule EctoCrux do
           * @see [Repo.aggregate/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/3)
         """
         @spec count(query :: Ecto.Query.t(), opts :: Keyword.t()) :: integer()
-        def unquote(:count)(%Ecto.Query{} = query, opts) do
+        def count(%Ecto.Query{} = query, opts) do
           query
           |> @repo.aggregate(:count, crux_clean_opts(opts))
         end
@@ -639,7 +639,7 @@ defmodule EctoCrux do
           * @see [Repo.aggregate/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/3)
         """
         @spec count(opts :: Keyword.t()) :: integer()
-        def unquote(:count)(opts) when is_list(opts) do
+        def count(opts) when is_list(opts) do
           init_query()
           |> count(opts)
         end
@@ -651,7 +651,7 @@ defmodule EctoCrux do
             baguettes_count = Baguettes.count()
         """
         @spec count() :: integer()
-        def unquote(:count)() do
+        def count do
           init_query()
           |> count()
         end
@@ -665,15 +665,15 @@ defmodule EctoCrux do
           * @see [Repo.aggregate/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/3)
         """
         @spec count_by(filters :: Keyword.t() | map(), opts :: Keyword.t()) :: integer()
-        def unquote(:count_by)(filters, opts \\ [])
+        def count_by(filters, opts \\ [])
 
-        def unquote(:count_by)(filters, opts) when is_list(filters) and is_list(opts) do
+        def count_by(filters, opts) when is_list(filters) and is_list(opts) do
           @init_query
           |> where(^filters)
           |> count(opts)
         end
 
-        def unquote(:count_by)(filters, opts) when is_map(filters) and is_list(opts) do
+        def count_by(filters, opts) when is_map(filters) and is_list(opts) do
           filters
           |> to_keyword()
           |> count_by(opts)
@@ -691,7 +691,7 @@ defmodule EctoCrux do
         ## Options
           * `with_assoc` [optional] - add associations fields to the list of allowed fields, defaults to `true`.
         """
-        def unquote(:to_schema_atom_params)(mixed_keyed_map, opts \\ [with_assoc: true])
+        def to_schema_atom_params(mixed_keyed_map, opts \\ [with_assoc: true])
             when is_map(mixed_keyed_map) and is_list(opts) do
           case opts[:with_assoc] do
             true ->
