@@ -119,34 +119,42 @@ defmodule EctoCrux do
   def excluded?(except, method, args), do: args in Keyword.get_values(except, method)
 
   defmacro __using__(args) do
-    quote bind_quoted: [args: args] do
+    module = Keyword.fetch!(args, :module)
+    repo = Keyword.get(args, :repo, Application.get_env(:ecto_crux, :repo))
+
+    page_size = Keyword.get(args, :page_size, Application.get_env(:ecto_crux, :page_size) || 50)
+
+    order_by = Keyword.get(args, :order_by)
+    select = Keyword.get(args, :select)
+    read_only = Keyword.get(args, :read_only)
+
+    read_only_excepts =
+      if read_only,
+        do: [
+          create: 2,
+          create_if_not_exist: 1,
+          create_if_not_exist: 2,
+          create_if_not_exist: 3,
+          update: 3,
+          update!: 3,
+          delete: 2
+        ],
+        else: []
+
+    except =
+      Keyword.get(args, :except, Keyword.new())
+      |> Keyword.merge(read_only_excepts)
+
+    quote bind_quoted: [
+            schema_module: module,
+            repo: repo,
+            page_size: page_size,
+            order_by: order_by,
+            select: select,
+            read_only: read_only,
+            except: except
+          ] do
       import EctoCrux, only: [excluded?: 3]
-
-      @schema_module args[:module]
-      @repo args[:repo] || Application.get_all_env(:ecto_crux)[:repo]
-      @page_size args[:page_size] ||
-                   Application.get_all_env(:ecto_crux)[:page_size] ||
-                   50
-      @order_by args[:order_by] || nil
-      @select args[:select] || nil
-      # allow to not defined functions that are not defined when using Repo with a read_only mode
-      @read_only args[:read_only] || false
-      # add more here if new "write" functions are added
-      @read_only_excepts (@read_only &&
-                            [
-                              create: 2,
-                              create_if_not_exist: 1,
-                              create_if_not_exist: 2,
-                              create_if_not_exist: 3,
-                              update: 3,
-                              update!: 3,
-                              delete: 2
-                            ]) || []
-      @except (args[:except] || Keyword.new()) |> Keyword.merge(@read_only_excepts)
-
-      ######################################################################################
-      # prepared queries
-      @init_query @schema_module |> Ecto.Queryable.to_query()
 
       ######################################################################################
 
@@ -156,39 +164,39 @@ defmodule EctoCrux do
       alias Ecto.{Query, Queryable}
 
       @doc "schema module is it associated to"
-      def schema_module, do: @schema_module
+      def schema_module, do: unquote(schema_module)
 
       @doc "configured repo to use"
-      def repo, do: @repo
+      def repo, do: unquote(repo)
 
       @doc "default page size if using pagination"
-      def page_size, do: @page_size
+      def page_size, do: unquote(page_size)
 
       @doc "value of read_only mode"
-      def read_only, do: @read_only
+      def read_only, do: unquote(read_only)
 
       @doc "value of default order by"
-      def order_by, do: @order_by
+      def order_by, do: unquote(order_by)
 
       @doc "value of default select"
-      def select, do: @select
+      def select, do: unquote(select)
 
       @doc "value of except"
-      def except, do: @except
+      def except, do: unquote(except)
 
       @doc "create a new query using schema module"
-      # eq: from e in @schema_module
-      def init_query, do: @init_query
+      # eq: from e in schema_module
+      def init_query, do: unquote(schema_module) |> Ecto.Queryable.to_query()
 
-      unless excluded?(@except, :change, 2) do
+      unless excluded?(except, :change, 2) do
         @doc "call schema_module changeset method"
-        def change(blob, attrs \\ %{}), do: @schema_module.changeset(blob, attrs)
+        def change(blob, attrs \\ %{}), do: unquote(schema_module).changeset(blob, attrs)
       end
 
       ######################################################################################
       # CREATE ONE
 
-      unless excluded?(@except, :create, 2) do
+      unless excluded?(except, :create, 2) do
         @doc """
         [Repo proxy of [insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)] Create (insert) a new baguette from attrs
 
@@ -200,15 +208,15 @@ defmodule EctoCrux do
 
         """
         @spec create(attrs :: map(), opts :: Keyword.t()) ::
-                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+                {:ok, unquote(schema_module).t()} | {:error, Ecto.Changeset.t()}
         def create(attrs \\ %{}, opts \\ []) do
-          %@schema_module{}
-          |> @schema_module.changeset(attrs)
-          |> @repo.insert(crux_clean_opts(opts))
+          %unquote(schema_module){}
+          |> unquote(schema_module).changeset(attrs)
+          |> unquote(repo).insert(crux_clean_opts(opts))
         end
       end
 
-      unless excluded?(@except, :create_if_not_exist, 1) do
+      unless excluded?(except, :create_if_not_exist, 1) do
         @doc """
         Create (insert) a baguette from attrs if it doesn't exist
 
@@ -222,18 +230,18 @@ defmodule EctoCrux do
         @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
         """
         @spec create_if_not_exist(attrs :: map()) ::
-                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+                {:ok, unquote(schema_module).t()} | {:error, Ecto.Changeset.t()}
         def create_if_not_exist(attrs), do: create_if_not_exist(attrs, attrs)
       end
 
-      unless excluded?(@except, :create_if_not_exist, 2) do
+      unless excluded?(except, :create_if_not_exist, 2) do
         @doc """
         [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
         Like `create_if_not_exist/1` but you can specify options (like prefix) to give to ecto
         """
         @spec create_if_not_exist(attrs :: map(), opts :: Keyword.t()) ::
-                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+                {:ok, unquote(schema_module).t()} | {:error, Ecto.Changeset.t()}
         def create_if_not_exist(attrs, opts) when is_list(opts),
           do: create_if_not_exist(attrs, attrs, opts)
 
@@ -246,13 +254,13 @@ defmodule EctoCrux do
         @see [Repo.insert/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:insert/2)
         """
         @spec create_if_not_exist(presence_attrs :: map(), creation_attrs :: map()) ::
-                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+                {:ok, unquote(schema_module).t()} | {:error, Ecto.Changeset.t()}
         def create_if_not_exist(presence_attrs, creation_attrs)
             when is_map(creation_attrs),
             do: create_if_not_exist(presence_attrs, creation_attrs, [])
       end
 
-      unless excluded?(@except, :create_if_not_exist, 3) do
+      unless excluded?(except, :create_if_not_exist, 3) do
         @doc """
         [Repo] Create (insert) a baguette from attrs if it doesn't exist
 
@@ -265,7 +273,7 @@ defmodule EctoCrux do
                 presence_attrs :: map(),
                 creation_attrs :: map(),
                 opts :: Keyword.t()
-              ) :: {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+              ) :: {:ok, unquote(schema_module).t()} | {:error, Ecto.Changeset.t()}
         def create_if_not_exist(presence_attrs, creation_attrs, opts)
             when is_map(creation_attrs) and is_list(opts) do
           if exist?(presence_attrs, opts),
@@ -277,7 +285,7 @@ defmodule EctoCrux do
       ######################################################################################
       # UPDATE
 
-      unless excluded?(@except, :update, 3) do
+      unless excluded?(except, :update, 3) do
         @doc """
         [Repo proxy] Updates a changeset using its primary key.
 
@@ -286,16 +294,16 @@ defmodule EctoCrux do
         ## Options
           * @see [Repo.update/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:update/2)
         """
-        @spec update(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) ::
-                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
+        @spec update(blob :: unquote(schema_module).t(), attrs :: map(), opts :: Keyword.t()) ::
+                {:ok, unquote(schema_module).t()} | {:error, Ecto.Changeset.t()}
         def update(blob, attrs, opts \\ []) do
           blob
-          |> @schema_module.changeset(attrs)
-          |> @repo.update(crux_clean_opts(opts))
+          |> unquote(schema_module).changeset(attrs)
+          |> unquote(repo).update(crux_clean_opts(opts))
         end
       end
 
-      unless excluded?(@except, :update!, 3) do
+      unless excluded?(except, :update!, 3) do
         @doc """
         [Repo proxy] Same as update/2 but return the struct or raises if the changeset is invalid
 
@@ -304,19 +312,19 @@ defmodule EctoCrux do
         ## Options
           * @see [Repo.update!/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:update!/2)
         """
-        @spec update!(blob :: @schema_module.t(), attrs :: map(), opts :: Keyword.t()) ::
-                @schema_module.t()
+        @spec update!(blob :: unquote(schema_module).t(), attrs :: map(), opts :: Keyword.t()) ::
+                unquote(schema_module).t()
         def update!(blob, attrs, opts \\ []) do
           blob
-          |> @schema_module.changeset(attrs)
-          |> @repo.update!(crux_clean_opts(opts))
+          |> unquote(schema_module).changeset(attrs)
+          |> unquote(repo).update!(crux_clean_opts(opts))
         end
       end
 
       ######################################################################################
       # DELETE
 
-      unless excluded?(@except, :delete, 2) do
+      unless excluded?(except, :delete, 2) do
         @doc """
         [Repo proxy] Deletes a struct using its primary key.
 
@@ -325,9 +333,9 @@ defmodule EctoCrux do
         ## Options
         * @see [Repo.delete/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:delete/2)
         """
-        @spec delete(blob :: @schema_module.t(), opts :: Keyword.t()) ::
-                {:ok, @schema_module.t()} | {:error, Ecto.Changeset.t()}
-        def delete(blob, opts \\ []), do: @repo.delete(blob, opts)
+        @spec delete(blob :: unquote(schema_module).t(), opts :: Keyword.t()) ::
+                {:ok, unquote(schema_module).t()} | {:error, Ecto.Changeset.t()}
+        def delete(blob, opts \\ []), do: unquote(repo).delete(blob, opts)
       end
 
       # idea: delete all, soft delete using ecto_soft_delete
@@ -335,7 +343,7 @@ defmodule EctoCrux do
       ######################################################################################
       # READ ONE
 
-      unless excluded?(@except, :get, 2) do
+      unless excluded?(except, :get, 2) do
         @doc """
         [Repo] Fetches a single struct from the data store where the primary key matches the given id.
 
@@ -350,16 +358,16 @@ defmodule EctoCrux do
           * @see [Repo.get/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get/3)
 
         """
-        @spec get(id :: term, opts :: Keyword.t()) :: @schema_module.t() | nil
+        @spec get(id :: term, opts :: Keyword.t()) :: unquote(schema_module).t() | nil
         def get(id, opts \\ []) do
-          @schema_module
-          |> crux_build_select(Keyword.get(opts, :select, @select))
-          |> @repo.get(id, crux_clean_opts(opts))
+          unquote(schema_module)
+          |> crux_build_select(Keyword.get(opts, :select, unquote(select)))
+          |> unquote(repo).get(id, crux_clean_opts(opts))
           |> crux_build_preload(opts[:preloads])
         end
       end
 
-      unless excluded?(@except, :get!, 2) do
+      unless excluded?(except, :get!, 2) do
         @doc """
         [Repo] Similar to get/2 but raises Ecto.NoResultsError if no record was found.
 
@@ -369,16 +377,16 @@ defmodule EctoCrux do
           * @see [Repo.get!/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get/3)
 
         """
-        @spec get!(id :: term, opts :: Keyword.t()) :: @schema_module.t()
+        @spec get!(id :: term, opts :: Keyword.t()) :: unquote(schema_module).t()
         def get!(id, opts \\ []) do
-          @schema_module
-          |> crux_build_select(Keyword.get(opts, :select, @select))
-          |> @repo.get!(id, crux_clean_opts(opts))
+          unquote(schema_module)
+          |> crux_build_select(Keyword.get(opts, :select, unquote(select)))
+          |> unquote(repo).get!(id, crux_clean_opts(opts))
           |> crux_build_preload(opts[:preloads])
         end
       end
 
-      unless excluded?(@except, :get_by, 2) do
+      unless excluded?(except, :get_by, 2) do
         @doc """
         [Repo] Fetches a single result from the clauses.
 
@@ -390,16 +398,16 @@ defmodule EctoCrux do
           * @see [Repo.get_by/3](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get_by/3)
         """
         @spec get_by(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
-                @schema_module.t() | nil
+                unquote(schema_module).t() | nil
         def get_by(clauses, opts \\ []) do
-          @schema_module
-          |> crux_build_select(Keyword.get(opts, :select, @select))
-          |> @repo.get_by(clauses, crux_clean_opts(opts))
+          unquote(schema_module)
+          |> crux_build_select(Keyword.get(opts, :select, unquote(select)))
+          |> unquote(repo).get_by(clauses, crux_clean_opts(opts))
           |> crux_build_preload(opts[:preloads])
         end
       end
 
-      unless excluded?(@except, :get_by!, 2) do
+      unless excluded?(except, :get_by!, 2) do
         @doc """
         [Repo] Similar to get_by/2 but raises Ecto.NoResultsError if no record was found.
 
@@ -409,11 +417,11 @@ defmodule EctoCrux do
           * @see [Repo.get_by!/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:get_by!/3)
         """
         @spec get_by!(clauses :: Keyword.t() | map(), opts :: Keyword.t()) ::
-                @schema_module.t()
+                unquote(schema_module).t()
         def get_by!(clauses, opts \\ []) do
-          @schema_module
-          |> crux_build_select(Keyword.get(opts, :select, @select))
-          |> @repo.get_by!(clauses, crux_clean_opts(opts))
+          unquote(schema_module)
+          |> crux_build_select(Keyword.get(opts, :select, unquote(select)))
+          |> unquote(repo).get_by!(clauses, crux_clean_opts(opts))
           |> crux_build_preload(opts[:preloads])
         end
       end
@@ -421,7 +429,7 @@ defmodule EctoCrux do
       ######################################################################################
       # READ MULTI
 
-      unless excluded?(@except, :find_by, 1) do
+      unless excluded?(except, :find_by, 1) do
         @doc """
         [Repo] Fetches all results using the query.
             query = from b in Baguette, where :kind in ["tradition"]
@@ -433,7 +441,7 @@ defmodule EctoCrux do
         end
       end
 
-      unless excluded?(@except, :find_by, 2) do
+      unless excluded?(except, :find_by, 2) do
         @doc """
         [Repo] Fetches all results using the query, with opts
             query = from b in Baguette, where :kind in ["tradition"]
@@ -460,9 +468,9 @@ defmodule EctoCrux do
 
           entries =
             query
-            |> crux_build_order_by(Keyword.get(opts, :order_by, @order_by))
-            |> crux_build_select(Keyword.get(opts, :select, @select))
-            |> @repo.all(crux_clean_opts(opts))
+            |> crux_build_order_by(Keyword.get(opts, :order_by, unquote(order_by)))
+            |> crux_build_select(Keyword.get(opts, :select, unquote(select)))
+            |> unquote(repo).all(crux_clean_opts(opts))
             |> ensure_typed_list()
 
           case pagination do
@@ -481,13 +489,13 @@ defmodule EctoCrux do
         end
       end
 
-      unless excluded?(@except, :find_by, 1) do
+      unless excluded?(except, :find_by, 1) do
         @doc """
         [Repo] Fetches all results from the filter clauses.
 
             best_baguettes = Baguettes.find_by(kind: "best")
         """
-        @spec find_by(filters :: Keyword.t() | map()) :: [@schema_module.t()]
+        @spec find_by(filters :: Keyword.t() | map()) :: [unquote(schema_module).t()]
 
         def find_by(filters) when is_map(filters) do
           filters
@@ -498,7 +506,7 @@ defmodule EctoCrux do
         def find_by(filters) when is_list(filters), do: find_by(filters, [])
       end
 
-      unless excluded?(@except, :find_by, 2) do
+      unless excluded?(except, :find_by, 2) do
         @doc """
         [Repo] Fetches all results from the filter clauses, with opts
             best_baguettes = Baguettes.find_by(kind: "best", prefix: "francaise")
@@ -509,12 +517,14 @@ defmodule EctoCrux do
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
         def find_by(filters, opts) when is_list(filters) do
-          @init_query
+          init_query()
           |> where(^filters)
           |> find_by(opts)
         end
 
-        @spec find_by(filters :: Keyword.t() | map(), opts :: map()) :: [@schema_module.t()]
+        @spec find_by(filters :: Keyword.t() | map(), opts :: map()) :: [
+                unquote(schema_module).t()
+              ]
         def find_by(filters, opts) when is_map(filters) do
           filters
           |> to_keyword()
@@ -522,7 +532,7 @@ defmodule EctoCrux do
         end
       end
 
-      unless excluded?(@except, :all, 1) do
+      unless excluded?(except, :all, 1) do
         @doc """
         [Repo] Fetches all entries from the data store
 
@@ -536,11 +546,11 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
-        @spec all(opts :: Keyword.t()) :: [@schema_module.t()]
+        @spec all(opts :: Keyword.t()) :: [unquote(schema_module).t()]
         def all(opts \\ []) when is_list(opts), do: find_by(%{}, opts)
       end
 
-      unless excluded?(@except, :stream, 2) do
+      unless excluded?(except, :stream, 2) do
         @doc """
         Like `find_by/1` by returns a stream to handle large requests
 
@@ -560,18 +570,18 @@ defmodule EctoCrux do
         def stream(filters, opts \\ []) do
           map_opts = to_map(opts)
 
-          @schema_module
+          unquote(schema_module)
           |> where(^filters)
           |> crux_filter_away_delete_if_requested(map_opts)
           |> crux_only_delete_if_requested(map_opts)
-          |> @repo.stream(crux_clean_opts(opts))
+          |> unquote(repo).stream(crux_clean_opts(opts))
         end
       end
 
       ######################################################################################
       # SUGAR
 
-      unless excluded?(@except, :preload, 3) do
+      unless excluded?(except, :preload, 3) do
         @doc """
         [Repo proxy] Preloads all associations on the given struct or structs.
 
@@ -582,13 +592,14 @@ defmodule EctoCrux do
         """
         @spec preload(structs_or_struct_or_nil, preloads :: term(), opts :: Keyword.t()) ::
                 structs_or_struct_or_nil
-              when structs_or_struct_or_nil: [@schema_module.t()] | @schema_module.t() | nil
+              when structs_or_struct_or_nil:
+                     [unquote(schema_module).t()] | unquote(schema_module).t() | nil
         def preload(blob, preloads, opts \\ []) do
-          blob |> @repo.preload(preloads, opts)
+          blob |> unquote(repo).preload(preloads, opts)
         end
       end
 
-      unless excluded?(@except, :exist?, 2) do
+      unless excluded?(except, :exist?, 2) do
         @doc """
         Test if an entry with <presence_attrs> exists
         """
@@ -596,13 +607,13 @@ defmodule EctoCrux do
         def exist?(presence_attrs, opts \\ []) do
           presence_attrs = to_keyword(presence_attrs)
 
-          @init_query
+          init_query()
           |> where(^presence_attrs)
-          |> @repo.exists?(crux_clean_opts(opts))
+          |> unquote(repo).exists?(crux_clean_opts(opts))
         end
       end
 
-      unless excluded?(@except, :count, 1) do
+      unless excluded?(except, :count, 1) do
         @doc """
         Count number of entries from a query
             query = from b in Baguette, where :kind in ["tradition"]
@@ -614,7 +625,7 @@ defmodule EctoCrux do
         end
       end
 
-      unless excluded?(@except, :count, 2) do
+      unless excluded?(except, :count, 2) do
         @doc """
         Count number of entries from a query with opts
             query = from b in Baguette, where :kind in ["tradition"]
@@ -626,11 +637,11 @@ defmodule EctoCrux do
         @spec count(query :: Ecto.Query.t(), opts :: Keyword.t()) :: integer()
         def count(%Ecto.Query{} = query, opts) do
           query
-          |> @repo.aggregate(:count, crux_clean_opts(opts))
+          |> unquote(repo).aggregate(:count, crux_clean_opts(opts))
         end
       end
 
-      unless excluded?(@except, :count, 1) do
+      unless excluded?(except, :count, 1) do
         @doc """
         Count number of entries with opts
             baguettes_count = Baguettes.count(prefix: "francaise")
@@ -645,7 +656,7 @@ defmodule EctoCrux do
         end
       end
 
-      unless excluded?(@except, :count, 0) do
+      unless excluded?(except, :count, 0) do
         @doc """
         Count number of elements
             baguettes_count = Baguettes.count()
@@ -657,7 +668,7 @@ defmodule EctoCrux do
         end
       end
 
-      unless excluded?(@except, :count_by, 2) do
+      unless excluded?(except, :count_by, 2) do
         @doc """
         Count number of entries complying with the filter clauses.
 
@@ -668,7 +679,7 @@ defmodule EctoCrux do
         def count_by(filters, opts \\ [])
 
         def count_by(filters, opts) when is_list(filters) and is_list(opts) do
-          @init_query
+          init_query()
           |> where(^filters)
           |> count(opts)
         end
@@ -680,7 +691,7 @@ defmodule EctoCrux do
         end
       end
 
-      unless excluded?(@except, :to_schema_atom_params, 2) do
+      unless excluded?(except, :to_schema_atom_params, 2) do
         @doc """
         Create an atom-keyed map from the given map.
         If both a string and an atom keys are provided in the original map, atom key gets priority.
@@ -695,10 +706,11 @@ defmodule EctoCrux do
             when is_map(mixed_keyed_map) and is_list(opts) do
           case opts[:with_assoc] do
             true ->
-              @schema_module.__schema__(:fields) ++ @schema_module.__schema__(:associations)
+              unquote(schema_module).__schema__(:fields) ++
+                unquote(schema_module).__schema__(:associations)
 
             _ ->
-              @schema_module.__schema__(:fields)
+              unquote(schema_module).__schema__(:fields)
           end
           |> Enum.reduce(%{}, fn key, atom_keyed_map ->
             string_key = Atom.to_string(key)
@@ -717,7 +729,7 @@ defmodule EctoCrux do
 
       defp ensure_typed_list(items) do
         case items do
-          [%@schema_module{} = _ | _] -> items
+          [%unquote(schema_module){} = _ | _] -> items
           _ -> []
         end
       end
@@ -820,7 +832,7 @@ defmodule EctoCrux do
         {:has_pagination, query, meta}
       end
 
-      defp crux_page_size(opts) when is_map(opts), do: Map.get(opts, :page_size, @page_size)
+      defp crux_page_size(opts) when is_map(opts), do: Map.get(opts, :page_size, unquote(page_size))
 
       defp crux_total_pages(0, _), do: 1
 
