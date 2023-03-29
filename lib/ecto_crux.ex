@@ -120,6 +120,14 @@ defmodule EctoCrux do
 
   defmacro __using__(args) do
     module = Keyword.fetch!(args, :module)
+
+    module =
+      if Macro.quoted_literal?(module) do
+        Macro.prewalk(module, &expand_alias(&1, __CALLER__))
+      else
+        module
+      end
+
     repo = Keyword.get(args, :repo, Application.get_env(:ecto_crux, :repo))
 
     page_size = Keyword.get(args, :page_size, Application.get_env(:ecto_crux, :page_size) || 50)
@@ -142,7 +150,8 @@ defmodule EctoCrux do
         else: []
 
     except =
-      Keyword.get(args, :except, Keyword.new())
+      args
+      |> Keyword.get(:except, Keyword.new())
       |> Keyword.merge(read_only_excepts)
 
     quote bind_quoted: [
@@ -832,7 +841,8 @@ defmodule EctoCrux do
         {:has_pagination, query, meta}
       end
 
-      defp crux_page_size(opts) when is_map(opts), do: Map.get(opts, :page_size, unquote(page_size))
+      defp crux_page_size(opts) when is_map(opts),
+        do: Map.get(opts, :page_size, unquote(page_size))
 
       defp crux_total_pages(0, _), do: 1
 
@@ -841,4 +851,9 @@ defmodule EctoCrux do
       end
     end
   end
+
+  defp expand_alias({:__aliases__, _, _} = alias, env),
+    do: Macro.expand(alias, %{env | function: {:__attr__, 3}})
+
+  defp expand_alias(other, _env), do: other
 end
