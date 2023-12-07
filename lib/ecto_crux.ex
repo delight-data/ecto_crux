@@ -444,6 +444,7 @@ defmodule EctoCrux do
             query = from b in Baguette, where :kind in ["tradition"]
             best_baguettes = Baguettes.find_by(query)
         """
+        @spec find_by(Ecto.Query.t()) :: [unquote(schema_module).t()]
         def find_by(%Ecto.Query{} = query) do
           query
           |> find_by([])
@@ -461,11 +462,13 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
+        @spec find_by(Ecto.Query.t(), map()) :: [unquote(schema_module).t()]
         def find_by(%Ecto.Query{} = query, opts) when is_map(opts) do
           query
           |> find_by(to_keyword(opts))
         end
 
+        @spec find_by(Ecto.Query.t(), Keyword.t()) :: [unquote(schema_module).t()]
         def find_by(%Ecto.Query{} = query, opts) do
           map_opts = to_map(opts)
 
@@ -505,7 +508,6 @@ defmodule EctoCrux do
             best_baguettes = Baguettes.find_by(kind: "best")
         """
         @spec find_by(filters :: Keyword.t() | map()) :: [unquote(schema_module).t()]
-
         def find_by(filters) when is_map(filters) do
           filters
           |> to_keyword()
@@ -525,6 +527,7 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
+        @spec find_by(Keyword.t(), Keyword.t() | map()) :: [unquote(schema_module).t()]
         def find_by(filters, opts) when is_list(filters) do
           init_query()
           |> where(^filters)
@@ -555,6 +558,7 @@ defmodule EctoCrux do
           * `select` - select expression, overrides default select for the crux usage
           * @see [Repo.all/2](https://hexdocs.pm/ecto/Ecto.Repo.html#c:all/2)
         """
+        @spec all() :: [unquote(schema_module).t()]
         @spec all(opts :: Keyword.t()) :: [unquote(schema_module).t()]
         def all(opts \\ []) when is_list(opts), do: find_by(%{}, opts)
       end
