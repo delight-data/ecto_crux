@@ -27,7 +27,7 @@ defmodule EctoCrux.MixProject do
 
   defp package do
     [
-      licenses: ["GNU GPLv3"],
+      licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/delight-data/ecto_crux"}
     ]
   end
